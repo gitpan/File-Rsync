@@ -17,8 +17,8 @@ WriteMakefile(
       AUTHOR         => $AUTHOR,
       ABSTRACT       => $ABSTRACT,
       PL_FILES       => { 'makepm.PL' => 'Config.pm' },
-      PM             => { 'Rsync.pm'  => '$(INST_LIBDIR)/Rsync.pm',
-     			  'Config.pm' => '$(INST_ARCHLIBDIR)/Rsync/Config.pm' },
+      PM             => { 'Rsync.pm'  => '$(INST_LIB)/File/Rsync.pm',
+     			  'Config.pm' => '$(INST_ARCHLIB)/File/Rsync/Config.pm' },
       dist           => { COMPRESS => 'gzip', SUFFIX => 'gz' },
       realclean      => { FILES => 'Config.pm' },
 );

@@ -1,7 +1,7 @@
 File-Rsync - A wrapper module for rsync(1) http://rsync.samba.org/rsync/
 
 *******************************************************************************
-Copyright (c) 2000 Lee Eakin.  All rights reserved.
+Copyright (c) 2000-2001 Lee Eakin.  All rights reserved.
    This program is free software; you can redistribute it and/or modify
    it under the same terms as Perl itself.
 *******************************************************************************
@@ -26,6 +26,9 @@ improvement are always greatly appreciated.
 Thanks to Andreas Keonig for explaining how to get this into the by-module
 listing properly, and helping me avoid possible problems by utilizing the
 arch-specific @INC dir to store the path to rsync itself.
+
+NOTE:  If you installed 0.18, the install path was incorrect.  You will
+most likely need to 'make install UNINST=1' to clean up properly.
 
 See the Changelog for details of all changes.
 

@@ -1,3 +1,9 @@
+Wed May 16 21:11:31 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.19: discovered the new makefile was installing
+      into the wrong path.  It should follow the proper naming convention
+      now.
+
 Thu May 10 22:28:28 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.18: Many thanks to Andreas Koenig
