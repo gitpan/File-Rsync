@@ -20,7 +20,7 @@ use Carp 'carp';
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.7 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.9 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -218,23 +218,23 @@ sub _parseopts {
    ));
    while (my $opt=shift @opts) {
       my $arg='';
-      print(STDERR "setting debug flag\n"),$OPT{debug}=1,next
+      print(STDERR "setting debug flag\n"),$OPT{'debug'}=1,next
          if $opt eq '--debug';
       if (my $reftype=ref $opt) {
          if ($reftype eq 'HASH') {
             # we were handed a reference to a hash, the caller prefers
             # perl-style long args instead of the rsync command-line style
-            if (exists $opt->{debug}) {
-               $OPT{debug}=$opt->{debug};
-               print(STDERR "setting debug flag\n") if $OPT{debug};
+            if (exists $opt->{'debug'}) {
+               $OPT{'debug'}=$opt->{'debug'};
+               print(STDERR "setting debug flag\n") if $OPT{'debug'};
             }
             foreach my $hashopt (keys %$opt) {
                next if $hashopt eq 'debug'; # we did this one first (above)
                print STDERR "processing option: $hashopt\n"
-                  if $OPT{debug} or $self->{debug};
-               if (exists $self->{flag}{$hashopt} or
-                     exists $self->{scalar}{$hashopt} or
-                     exists $self->{counter}{$hashopt}) {
+                  if $OPT{'debug'} or $self->{'debug'};
+               if (exists $self->{'flag'}{$hashopt} or
+                     exists $self->{'scalar'}{$hashopt} or
+                     exists $self->{'counter'}{$hashopt}) {
                   $OPT{$hashopt}=$opt->{$hashopt};
                } else {
                   my $tag='';
@@ -261,7 +261,7 @@ sub _parseopts {
                   } elsif ($hashopt eq 'dest' or
                         $hashopt eq 'destination' or
                         $hashopt eq 'dst') {
-                      $OPT{dest}=$opt->{$hashopt};
+                      $OPT{'dest'}=$opt->{$hashopt};
 
                   } elsif ($hashopt eq 'path-to-rsync') {
                      $OPT{$hashopt}=$opt->{$hashopt};
@@ -277,12 +277,12 @@ sub _parseopts {
          }
       } else {
          print STDERR "processing option: $opt\n"
-            if $OPT{debug} or $self->{debug};
+            if $OPT{'debug'} or $self->{'debug'};
          if ($opt=~/^-/) {
             # handle short opts first
             if ($opt=~/^-(\w+)$/) {
                foreach my $char (split '',$1) {
-                  print STDERR "short option: -$char\n" if $self->{debug};
+                  print STDERR "short option: -$char\n" if $self->{'debug'};
                   if (exists $short{$char}) {
                      # get the long form
                      foreach my $lop (split /:/,$short{$char}) {
@@ -305,18 +305,18 @@ sub _parseopts {
             # this is largely a repeat of the code above for hashes with minor
             # changes, I haven't figured out a better way to handle this yet
             if ($opt=~/^--(\w+[\w-]*)=(.*)$/) {
-               print STDERR "splitting longopt: $opt ($1 $2)\n" if $self->{debug};
+               print STDERR "splitting longopt: $opt ($1 $2)\n" if $self->{'debug'};
                ($opt,$arg)=($1,$2);
             }
             # handle boolean flags
             $OPT{$opt}=1,next
-               if exists $self->{flag}{$opt};
+               if exists $self->{'flag'}{$opt};
             # handle simple scalars
             $OPT{$opt}=($arg || shift @opts),next
-               if exists $self->{scalar}{$opt};
+               if exists $self->{'scalar'}{$opt};
             # handle counters
             $OPT{$opt}++,next
-               if exists $self->{counter}{$opt};
+               if exists $self->{'counter'}{$opt};
             my $val=$arg || shift @opts;
             if ($opt eq 'exclude') {
                if (my $reftype=ref $val) {
@@ -325,40 +325,40 @@ sub _parseopts {
                   # an exclude, not both), you can clear an include or exclude
                   # by passing a reference to an emtpy array
                   if ($reftype eq 'ARRAY') {
-                     $OPT{exclude}=$val;
+                     $OPT{'exclude'}=$val;
                   } else {
                      carp "$pkgname: invalid reference for 'exclude' option";
                      return 0;
                   }
                } elsif ($val eq '!') {
                   # they sent a reset, we will too
-                  $OPT{exclude}=[];
+                  $OPT{'exclude'}=[];
                } else {
                   # otherwise add it to the list
-                  push @{$OPT{appendex}},$val;
+                  push @{$OPT{'appendex'}},$val;
                }
             } elsif ($opt eq 'include') {
                if (my $reftype=ref $val) {
                   # see array reference comments under 'exclude' above
                   if ($reftype eq 'ARRAY') {
-                     $OPT{include}=$val;
+                     $OPT{'include'}=$val;
                   } else {
                      carp "$pkgname: invalid reference for 'include' option";
                      return 0;
                   }
                } elsif ($val eq '!') {
                   # they sent a reset, we will too
-                  $OPT{exclude}=[];
+                  $OPT{'exclude'}=[];
                } elsif ($val=~ s/^- //) {
                   # to preserve order we store both includes and excludes in
                   # the same array.  We use the leading '+ ' (plus space) trick
                   # from the man page to accomplish this.
-                  push @{$OPT{appendex}},$val;
+                  push @{$OPT{'appendex'}},$val;
                } else {
                   # if it really is an include, fix it first, since we use
                   # exclude instead
                   $val='+ '.$val unless $val=~/^\+ /;
-                  push @{$OPT{appendex}},$val;
+                  push @{$OPT{'appendex'}},$val;
                }
             } elsif ($opt eq 'path-to-rsync') {
                $OPT{$opt}=$val;
@@ -367,7 +367,7 @@ sub _parseopts {
                return 0;
             }
          } else { # must be data (source/destination info)
-            push @{$OPT{data}},$opt;
+            push @{$OPT{'data'}},$opt;
          }
       }
    }
@@ -382,12 +382,12 @@ sub _saveopts {
    my $opts=shift;
    return 0 unless ref $opts eq 'HASH';
    foreach my $opt (keys %$opts) {
-      if (exists $self->{flag}{$opt}) {
-         $self->{flag}{$opt}=$opts->{$opt};
-      } elsif (exists $self->{scalar}{$opt}) {
-         $self->{scalar}{$opt}=$opts->{$opt};
-      } elsif (exists $self->{counter}{$opt}) {
-         $self->{counter}{$opt}=$opts->{$opt};
+      if (exists $self->{'flag'}{$opt}) {
+         $self->{'flag'}{$opt}=$opts->{$opt};
+      } elsif (exists $self->{'scalar'}{$opt}) {
+         $self->{'scalar'}{$opt}=$opts->{$opt};
+      } elsif (exists $self->{'counter'}{$opt}) {
+         $self->{'counter'}{$opt}=$opts->{$opt};
       } elsif ($opt eq 'exclude' or $opt eq 'include' or
             $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug' or
             $opt eq 'path-to-rsync') {
@@ -395,7 +395,7 @@ sub _saveopts {
       } elsif ($opt eq 'data') {
          push @{$self->{$opt}},@{$opts->{$opt}};
       } elsif ($opt eq 'appendex') {
-         push @{$self->{exclude}},@{$opts->{$opt}};
+         push @{$self->{'exclude'}},@{$opts->{$opt}};
       } else {
          carp "$pkgname: unknown option: $opt";
          return 0;
@@ -460,12 +460,12 @@ sub exec {
       }
       # now allow any args passed directly to exec to override
       foreach my $opt (keys %$execopts) {
-         if (exists $runopts{flag}{$opt}) {
-            $runopts{flag}{$opt}=$execopts->{$opt};
-         } elsif (exists $runopts{scalar}{$opt}) {
-            $runopts{scalar}{$opt}=$execopts->{$opt};
-         } elsif (exists $runopts{counter}{$opt}) {
-            $runopts{counter}{$opt}=$execopts->{$opt};
+         if (exists $runopts{'flag'}{$opt}) {
+            $runopts{'flag'}{$opt}=$execopts->{$opt};
+         } elsif (exists $runopts{'scalar'}{$opt}) {
+            $runopts{'scalar'}{$opt}=$execopts->{$opt};
+         } elsif (exists $runopts{'counter'}{$opt}) {
+            $runopts{'counter'}{$opt}=$execopts->{$opt};
          } elsif ($opt eq 'exclude' or $opt eq 'include' or
                $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug' or
                $opt eq 'path-to-rsync') {
@@ -473,7 +473,7 @@ sub exec {
          } elsif ($opt eq 'data') {
             push @{$runopts{$opt}},@{$execopts->{$opt}};
          } elsif ($opt eq 'appendex') {
-            push @{$runopts{exclude}},@{$execopts->{$opt}};
+            push @{$runopts{'exclude'}},@{$execopts->{$opt}};
          } else {
             carp "$pkgname: unknown option: $opt";
             return 0;
@@ -486,72 +486,72 @@ sub exec {
 
    my @cmd=($merged->{'path-to-rsync'});
 
-   foreach my $opt (sort keys %{$merged->{flag}}) {
-      push @cmd,"--$opt" if $merged->{flag}{$opt};
+   foreach my $opt (sort keys %{$merged->{'flag'}}) {
+      push @cmd,"--$opt" if $merged->{'flag'}{$opt};
    }
-   foreach my $opt (sort keys %{$merged->{scalar}}) {
-      push @cmd,"--$opt=".$merged->{scalar}{$opt} if $merged->{scalar}{$opt};
+   foreach my $opt (sort keys %{$merged->{'scalar'}}) {
+      push @cmd,"--$opt=".$merged->{'scalar'}{$opt} if $merged->{'scalar'}{$opt};
    }
-   foreach my $opt (sort keys %{$merged->{counter}}) {
-      for (my $i=0;$i<$merged->{counter}{$opt};$i++) {
+   foreach my $opt (sort keys %{$merged->{'counter'}}) {
+      for (my $i=0;$i<$merged->{'counter'}{$opt};$i++) {
          push @cmd,"--$opt";
       }
    }
-   if (@{$merged->{exclude}} and @{$merged->{include}}) {
+   if (@{$merged->{'exclude'}} and @{$merged->{'include'}}) {
       carp "$pkgname: both 'exclude' and 'include' options specified, only one allowed";
       return 0;
    }
-   foreach my $opt (@{$merged->{exclude}}) {
+   foreach my $opt (@{$merged->{'exclude'}}) {
       push @cmd,'--exclude='.$opt;
    }
-   foreach my $opt (@{$merged->{include}}) {
+   foreach my $opt (@{$merged->{'include'}}) {
       push @cmd,'--include='.$opt;
    }
-   if ($merged->{source} or $merged->{dest}) {
-      if ($merged->{source}) {
-         if (ref $merged->{source}) {
-            push @cmd,@{$merged->{source}};
+   if ($merged->{'source'} or $merged->{'dest'}) {
+      if ($merged->{'source'}) {
+         if (ref $merged->{'source'}) {
+            push @cmd,@{$merged->{'source'}};
          } else {
-            push @cmd,$merged->{source};
+            push @cmd,$merged->{'source'};
          }
       } else {
          carp "$pkgname: option 'dest' specified without 'source' option";
          return 0;
       }
-      if ($merged->{dest}) {
-         push @cmd,$merged->{dest};
+      if ($merged->{'dest'}) {
+         push @cmd,$merged->{'dest'};
       } else {
          carp "$pkgname: option 'source' specified without 'dest' option";
          return 0;
       }
-   } elsif (@{$merged->{data}}) {
-      foreach my $opt (@{$merged->{data}}) {
+   } elsif (@{$merged->{'data'}}) {
+      foreach my $opt (@{$merged->{'data'}}) {
          push @cmd,$opt;
       }
    } else {
       carp "$pkgname: no source or destination specified";
       return 0;
    }
-   print STDERR "exec: @cmd\n" if $merged->{debug};
+   print STDERR "exec: @cmd\n" if $merged->{'debug'};
    my $in=FileHandle->new; my $out=FileHandle->new; my $err=FileHandle->new;
    my $pid=eval{ open3 $in,$out,$err,@cmd };
    if ($@) {
-      $self->{realstatus}=0;
-      $self->{status}=255;
-      $self->{err}=[$@,"Execution of rsync failed.\n"];
+      $self->{'realstatus'}=0;
+      $self->{'status'}=255;
+      $self->{'err'}=[$@,"Execution of rsync failed.\n"];
       return 0;
    }
    $in->close; # we don't use it and neither should rsync (at least not yet)
-   $self->{err}=[ $err->getlines ];
-   $self->{out}=[ $out->getlines ];
+   $self->{'err'}=[ $err->getlines ];
+   $self->{'out'}=[ $out->getlines ];
    $err->close;
    $out->close;
    waitpid $pid,0;
-   $self->{err}=0 unless @{$self->{err}};
-   $self->{out}=0 unless @{$self->{out}};
-   $self->{realstatus}=$?;
-   $self->{status}=$?>>8;
-   return($self->{status} ? 0 : 1);
+   $self->{'err'}=0 unless @{$self->{'err'}};
+   $self->{'out'}=0 unless @{$self->{'out'}};
+   $self->{'realstatus'}=$?;
+   $self->{'status'}=$?>>8;
+   return($self->{'status'} ? 0 : 1);
 }
 
 =over 4
@@ -572,7 +572,7 @@ Returns the status from last I<exec> call right shifted 8 bits.
 
 sub status {
    my $self=shift;
-   return $self->{status};
+   return $self->{'status'};
 }
 
 =over 4
@@ -593,7 +593,7 @@ Returns the real status from last I<exec> call (not right shifted).
 
 sub realstatus {
    my $self=shift;
-   return $self->{realstatus};
+   return $self->{'realstatus'};
 }
 
 =over 4
@@ -620,10 +620,10 @@ to make it easier for you to parse that output for appropriate information.
 
 sub err {
    my $self=shift;
-   if ($self->{err}) {
-      return(wantarray ? @{$self->{err}} : $self->{err});
+   if ($self->{'err'}) {
+      return(wantarray ? @{$self->{'err'}} : $self->{'err'});
    } else {
-      return(wantarray ? () : $self->{err});
+      return(wantarray ? () : $self->{'err'});
    }
 }
 
@@ -649,16 +649,16 @@ output to stdout or an empty list.  I<rsync> sends all informational messages
 
 sub out {
    my $self=shift;
-   if ($self->{out}) {
-      return(wantarray ? @{$self->{out}} : $self->{out});
+   if ($self->{'out'}) {
+      return(wantarray ? @{$self->{'out'}} : $self->{'out'});
    } else {
-      return(wantarray ? () : $self->{out});
+      return(wantarray ? () : $self->{'out'});
    }
 }
 
 =head1 Author
 
-Lee Eakin E<lt>leakin@dfw.nostrum.comE<gt>
+Lee Eakin E<lt>leakin@nostrum.comE<gt>
 
 =head1 Credits
 

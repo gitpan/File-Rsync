@@ -58,9 +58,9 @@ system qw(rm -rf destdir);
       print "not ";
    } else {
       my $ret=$rs->exec('some-non-existant-path-name','destdir');
-      $ret == 1
-         && $rs->status == 0
-         && @{$rs->err} == 1
+      # odd: on Solaris $ret == 0, $rs->status == 11
+      #    but on Linux $ret == 1, $rs->status == 0
+         @{$rs->err} == 1
          && ${$rs->err}[0] =~ /^\S+\s*:\s+No such file or directory$/
          || print "not ";
    }

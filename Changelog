@@ -1,4 +1,15 @@
+Wed Dec  1 21:55:44 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.09: removed bareword keys in hashes (5.00404 doesn't like
+      my use of 'scalar' as a key)
+
+      * version 0.08: changed test 5 in test.pl to account for different
+      return status between Solaris and Linux.  I'll need to look into why
+      one detects the error and the other doesn't (rsync itself, not perl).
+
 Tue Nov 30 20:46:00 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.07:
 
       * removed global $pkgname, now uses 'my $pkgname=ref $self' instead.
       I also had to bless $self earlier in 'new' so defopts, and parseopts can
@@ -9,6 +20,8 @@ Tue Nov 30 20:46:00 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
       are for internal use only.
 
 Sun Nov 28 19:41:31 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.06:
 
       * added $pkgname for 'carp' messages to make it clearer where they came
       from.
