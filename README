@@ -6,7 +6,7 @@ Copyright (C) 2000-2004 Lee Eakin.  All rights reserved.
    it under the same terms as Perl itself.
 *******************************************************************************
 
-Updated to support new options on rsync 2.6.0 (especially --files-from).
+Updated to support new options on rsync 2.6.3
 
 If you are using an older version than rsync 2.6.2, please check out the
 latest version.  There have been several fixes and significant speed

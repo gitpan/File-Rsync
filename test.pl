@@ -50,7 +50,7 @@ system qw(rm -rf destdir);
       no strict;
       my $ret=$rs->exec(src => 'some-non-existant-path-name', dest => 'destdir');
          (@{$rs->err} >= 1
-         && $rs->err->[0] =~ /:\s+No such file or directory$/)
+         && $rs->err->[0] =~ /:\s+No such file or directory\b/)
          || ($fail++,print "not ");
    }
    print "ok 4\n";

@@ -1,3 +1,8 @@
+Wed Dec  8 18:33:45 CST 2004 ( leakin at dfw dot nostrum dot com )
+
+		* version 0.35: test 4 was failing due to bad pattern match in the
+		test code .no functional changes (error message changed for 2.6.3).
+
 Thu Aug 12 20:45:43 CDT 2004 ( leakin at dfw dot nostrum dot com )
 
 		* version 0.34: added support for new options in 2.6.3: partial-dir,
