@@ -24,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.36';
+$VERSION = '0.37';
 
 =head1 NAME
 
@@ -135,35 +135,38 @@ sub new {
       # these are the boolean flags to rsync, all default off, including them
       # in the args list turns them on
       'flag' => {qw(
-         archive           0  group             0  one-file-system   0 
-         backup            0  hard-links        0  whole-file        0 
-         blocking-io       0  help              0  owner             0 
-         checksum          0  ignore-errors     0  partial           0 
-         compress          0  ignore-existing   0  perms             0 
-         copy-links        0  ignore-times      0  progress          0 
-         copy-unsafe-links 0  inplace           0  recursive         0 
-         cvs-exclude       0  ipv4              0  relative          0 
-         daemon            0  ipv6              0  safe-links        0 
-         delete            0  keep-dirlinks     0  size-only         0 
-         delete-after      0  links             0  sparse            0 
-         delete-excluded   0  no-blocking-io    0  stats             0 
-         devices           0  no-detach         0  times             0 
-         dry-run           0  no-implied-dirs   0  update            0 
-         existing          0  no-relative       0  version           0 
-         force             0  no-whole-file     0
-         from0             0  numeric-ids       0
+         archive           0  force             0  no-whole-file     0
+         backup            0  from0             0  numeric-ids       0
+         blocking-io       0  fuzzy             0  omit-dir-times    0
+         checksum          0  group             0  one-file-system   0
+         compress          0  hard-links        0  whole-file        0
+         copy-links        0  help              0  owner             0
+         copy-unsafe-links 0  ignore-errors     0  partial           0
+         cvs-exclude       0  ignore-existing   0  perms             0
+         daemon            0  ignore-times      0  progress          0
+         del               0  inplace           0  recursive         0
+         delay-updates     0  ipv4              0  relative          0
+         delete            0  ipv6              0  remove-sent-files 0
+         delete-after      0  itemize-changes   0  safe-links        0
+         delete-before     0  keep-dirlinks     0  size-only         0
+         delete-during     0  links             0  sparse            0
+         delete-excluded   0  list-only         0  stats             0
+         devices           0  no-blocking-io    0  times             0
+         dirs              0  no-detach         0  update            0
+         dry-run           0  no-implied-dirs   0  version           0
+         existing          0  no-relative       0
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
-         address           0  files-from        0  read-batch        0
-         backup-dir        0  include-from      0  rsh               0
-         block-size        0  link-dest         0  rsync-path        0
-         bwlimit           0  log-format        0  suffix            0
-         checksum-seed     0  max-delete        0  temp-dir          0 
-         compare-dest      0  modify-window     0  timeout           0 
-         config            0  partia-dir        0  write-batch       0 
-         csum-length       0  password-file     0
-         exclude-from      0  port              0
+         address           0  files-from        0  port              0
+         backup-dir        0  include-from      0  read-batch        0
+         block-size        0  link-dest         0  rsh               0
+         bwlimit           0  log-format        0  rsync-path        0
+         checksum-seed     0  max-delete        0  suffix            0
+         compare-dest      0  max-size          0  temp-dir          0
+         config            0  modify-window     0  timeout           0
+         csum-length       0  partial-dir       0  write-batch       0
+         exclude-from      0  password-file     0
       )},
       # these are not flags but counters, each time they appear it raises the
       # count, so we keep track and pass them the same number of times
@@ -172,6 +175,7 @@ sub new {
       # specifies that it is an ordered list so we must preserve that order
       'exclude'     => [],
       'include'     => [],
+      'filter'      => [],
       # hostname of source, used if 'source' is an array reference
       'srchost'     => '',
       # source host and/or path names
@@ -249,15 +253,15 @@ sub _parseopts {
       if (my $reftype = ref $opt) {
          unless ($reftype eq 'HASH') {
             carp "$pkgname: invalid reference type ($reftype) in options";
-            return 0;
+            return;
          }
       } else {
          carp "$pkgname: invalid option ($opt)";
-         return 0;
+         return;
       }
    } elsif (@opts % 2) {
       carp "$pkgname: invalid number of options passed (must be key/value pairs)";
-      return 0;
+      return;
    } else {
       $opt = {@opts};
    }
@@ -280,7 +284,9 @@ sub _parseopts {
          $OPT{$savopt} = $opt->{$hashopt};
       } else {
          my $tag = '';
-         if ($hashopt eq 'exclude' or $hashopt eq 'include') {
+         if (     $hashopt eq 'exclude'
+               or $hashopt eq 'include'
+               or $hashopt eq 'filter') {
             $tag = $hashopt;
          } elsif ($hashopt eq 'source'
                or $hashopt eq 'src') {
@@ -292,13 +298,13 @@ sub _parseopts {
                   $OPT{$tag} = $opt->{$hashopt};
                } else {
                   carp "$pkgname: invalid reference type for $hashopt option";
-                  return 0;
+                  return;
                }
             } elsif ( $tag eq 'source') {
                $OPT{$tag} = $opt->{$hashopt};
             } else {
                carp "$pkgname: $hashopt is not a reference";
-               return 0;
+               return;
             }
          } elsif ($hashopt eq 'dest'
                or $hashopt eq 'destination'
@@ -316,11 +322,11 @@ sub _parseopts {
                $OPT{$hashopt} = $opt->{$hashopt};
             } else {
                carp "$pkgname: $hashopt option is not a function reference";
-               return 0;
+               return;
             }
          } else {
             carp "$pkgname: $hashopt - unknown option";
-            return 0;
+            return;
          }
       }
    }
@@ -333,7 +339,7 @@ sub _saveopts {
    my $self = shift;
    my $pkgname = ref $self;
    my $opts = shift;
-   return 0 unless ref $opts eq 'HASH';
+   return unless ref $opts eq 'HASH';
    foreach my $opt (keys %$opts) {
       if (exists $self->{'flag'}{$opt}) {
          $self->{'flag'}{$opt} = $opts->{$opt};
@@ -341,7 +347,7 @@ sub _saveopts {
          $self->{'scalar'}{$opt} = $opts->{$opt};
       } elsif (exists $self->{'counter'}{$opt}) {
          $self->{'counter'}{$opt} = $opts->{$opt};
-      } elsif ($opt eq 'exclude' or $opt eq 'include'
+      } elsif ($opt eq 'exclude' or $opt eq 'include' or $opt eq 'filter'
             or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
             or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
             or $opt eq 'path-to-rsync' or $opt eq 'srchost'
@@ -349,7 +355,7 @@ sub _saveopts {
          $self->{$opt} = $opts->{$opt};
       } else {
          carp "$pkgname: unknown option: $opt";
-         return 0;
+         return;
       }
    }
    return 1;
@@ -357,39 +363,39 @@ sub _saveopts {
 
 =over 4
 
-=item File::Rsync::exec
+=item File::Rsync::getcmd
 
-$obj->exec(@options) or warn "rsync failed\n";
+my $cmd = $obj->getcmd(@options);
 
    or
 
-$obj->exec(\%options) or warn "rsync failed\n";
+my $cmd = $obj->getcmd(\%options);
 
-This is the method that does the real work.  Any options passed to this
-routine are appended to any pre-set options and are not saved.  They effect
-the current execution of I<rsync> only.  In the case of conflicts, the options
-passed directly to I<exec> take precedence.  It returns B<1> if the return
-status was zero (or true), if the I<rsync> return status was non-zero it
-returns B<0> and stores the return status.  You can examine the return status
-from I<rsync> and any output to stdout and stderr with the methods listed below.
+   or
+
+my ($cmd, $infun, $outfun, $errfun, $debug) = $obj->getcmd(\%options);
+
+I<getcmd> returns a reference to an array containing the real rsync command
+that would be called if the exec function were called.  The last example above
+includes a reference to the optional stdin function, stdout function, stderr
+function, and the debug setting.  This is the form used by the I<exec> method
+to get the extra parameters it needs to do its job.
 
 =back
 
 =cut
 
-sub exec {
+sub getcmd {
    my $self = shift;
    my $pkgname = ref $self;
-   my $merged = 0;
+   my $merged = $self;
    my $list = $self->{list};
    $self->{list} = 0 if $self->{list};
    if (@_) { # If args are passed to exec then we have to merge the saved
       # (default) options with those passed, for any conflicts those passed
-      # directly to exec take precidence, and perl-style options take
-      # precidence over rsync command-line style options (because they offer
-      # more flexibility)
+      # directly to exec take precidence
       my $execopts = &_parseopts($self,@_);
-      return 0 unless ref $execopts eq 'HASH';
+      return unless ref $execopts eq 'HASH';
       my %runopts = ();
       # first copy the default info from $self
       foreach my $type (qw(flag scalar counter)) {
@@ -397,8 +403,8 @@ sub exec {
             $runopts{$type}{$opt} = $self->{$type}{$opt};
          }
       }
-      foreach my $opt (qw(path-to-rsync exclude include source srchost debug
-            dest outfun errfun infun quote-dst quote-src)) {
+      foreach my $opt (qw(path-to-rsync exclude include filter source srchost
+               debug dest outfun errfun infun quote-dst quote-src)) {
          $runopts{$opt} = $self->{$opt};
       }
       # now allow any args passed directly to exec to override
@@ -409,7 +415,7 @@ sub exec {
             $runopts{'scalar'}{$opt} = $execopts->{$opt};
          } elsif (exists $runopts{'counter'}{$opt}) {
             $runopts{'counter'}{$opt} = $execopts->{$opt};
-         } elsif ($opt eq 'exclude' or $opt eq 'include'
+         } elsif ($opt eq 'exclude' or $opt eq 'include' or $opt eq 'filter'
                or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
                or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
                or $opt eq 'path-to-rsync' or $opt eq 'srchost'
@@ -417,12 +423,10 @@ sub exec {
             $runopts{$opt} = $execopts->{$opt};
          } else {
             carp "$pkgname: unknown option: $opt";
-            return 0;
+            return;
          }
       }
       $merged = \%runopts;
-   } else {
-      $merged = $self;
    }
 
    my @cmd = ($merged->{'path-to-rsync'});
@@ -438,15 +442,19 @@ sub exec {
          push @cmd,"--$opt";
       }
    }
-   if (@{$merged->{'exclude'}} and @{$merged->{'include'}}) {
-      carp "$pkgname: both 'exclude' and 'include' options specified, only one allowed";
-      return 0;
+   if ((@{$merged->{'exclude'}} != 0) + (@{$merged->{'include'}} != 0)
+           + (@{$merged->{'filter'}} != 0) > 1) {
+      carp "$pkgname: 'exclude' and/or 'include' and/or 'filter' options specified, only one allowed";
+      return;
    }
    foreach my $opt (@{$merged->{'exclude'}}) {
       push @cmd,'--exclude='.$opt;
    }
    foreach my $opt (@{$merged->{'include'}}) {
       push @cmd,'--include='.$opt;
+   }
+   foreach my $opt (@{$merged->{'filter'}}) {
+      push @cmd,'--filter='.$opt;
    }
    if ($merged->{'source'}) {
       if (ref $merged->{'source'}) {
@@ -475,13 +483,13 @@ sub exec {
    } else {
       if ($list) {
          carp "$pkgname: no 'source' specified";
-         return 0;
+         return;
       } elsif ($merged->{'dest'}) {
          carp "$pkgname: option 'dest' specified without 'source' option";
-         return 0;
+         return;
       } else {
          carp "$pkgname: no source or destination specified";
-         return 0;
+         return;
       }
    }
    unless ($list) {
@@ -491,10 +499,46 @@ sub exec {
                                    : $merged->{'dest'};
       } else {
          carp "$pkgname: option 'source' specified without 'dest' option";
-         return 0;
+         return;
       }
    }
-   print STDERR "exec: @cmd\n" if $merged->{'debug'};
+   return(wantarray
+         ? (\@cmd,
+            $merged->{'infun'},
+            $merged->{'outfun'},
+            $merged->{'errfun'},
+            $merged->{'debug'})
+         : \@cmd);
+}
+
+=over 4
+
+=item File::Rsync::exec
+
+$obj->exec(@options) or warn "rsync failed\n";
+
+   or
+
+$obj->exec(\%options) or warn "rsync failed\n";
+
+This is the method that does the real work.  Any options passed to this
+routine are appended to any pre-set options and are not saved.  They effect
+the current execution of I<rsync> only.  In the case of conflicts, the options
+passed directly to I<exec> take precedence.  It returns B<1> if the return
+status was zero (or true), if the I<rsync> return status was non-zero it
+returns B<0> and stores the return status.  You can examine the return status
+from I<rsync> and any output to stdout and stderr with the methods listed below.
+
+=back
+
+=cut
+
+sub exec {
+   my $self = shift;
+
+   my ($cmd, $infun, $outfun, $errfun, $debug) = $self->getcmd(@_);
+   return unless $cmd;
+   print STDERR "exec: @$cmd\n" if $debug;
    my $out = FileHandle->new; my $err = FileHandle->new;
    $err->autoflush(1);
    $out->autoflush(1);
@@ -503,16 +547,16 @@ sub exec {
    {
       my $in = FileHandle->new;
       $in->autoflush(1);
-      $pid = eval{ open3 $in,$out,$err,@cmd };
-      $self->{lastcmd} = \@cmd;
+      $pid = eval{ open3 $in,$out,$err,@$cmd };
+      $self->{lastcmd} = $cmd;
       if ($@) {
          $self->{'realstatus'} = 0;
          $self->{'status'} = 255;
          $self->{'err'} = [$@,"Execution of rsync failed.\n"];
          return 0;
       }
-      if ($merged->{infun}) {
-         select((select($in),&{$merged->{infun}})[0]);
+      if ($infun) {
+         select((select($in),&{$infun})[0]);
       }
       $in->close;
       sleep 1; # give open3 a chance to get the filehandles opened
@@ -525,14 +569,14 @@ sub exec {
         data         => \$odata,
         buffer_tail  => '',
         block_size   => ($out->stat)[11] || 1024,
-        handler      => $merged->{outfun}
+        handler      => $outfun
      },         
      $err->fileno => {
         name         => 'err',
         data         => \$edata,
         buffer_tail  => '',
         block_size   => ($err->stat)[11] || 1024,
-        handler      => $merged->{errfun}
+        handler      => $errfun
      }
    };
 
@@ -580,18 +624,21 @@ $out = $obj->list(@options);
 
    or
 
-$out = $obj->list(%options);
+$out = $obj->list(\%options);
 
    or
 
-@out = $obj->list(%options);
+@out = $obj->list(\%options);
 
 This is a wrapper for I<exec> called without a destination to get a listing.
 It returns the output of stdout like the I<out> function below.  When
 no destination is given rsync returns the equivalent of 'ls -l' or 'ls -lr'
-modified by any include/exclude parameters you specify.  This is useful
+modified by any include/exclude/filter parameters you specify.  This is useful
 for manual comparison without actual changes to the destination or for
 comparing against another listing taken at a different point in time.
+
+(As of rsync version 2.6.4-pre1 this can also be accomplished with the
+'list-only' option regardless of whether a destination is given.)
 
 =back
 

@@ -1,27 +1,43 @@
+Sat Mar  5 19:59:01 CST 2005 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.37: added support for new options in 2.6.4-pre1:
+      del, delete-before, delete-during, delay-updates, dirs, filter,
+      fuzzy, itemize-changes, list-only, omit-dir-times, remove-sent-files,
+      and max-size.  See the rsync manpage for full details on these options.
+
+      Fixed a type-o that kept partial-dir from being handled properly.
+
+      Bill Uhl ( buhl at web-services dot net ) provided a patch to
+      split out the creation of the rsync command from the exec function.
+      The new call (getcmd) returns a reference to an array of the command
+      to be executed.  Bill is working on a graphical interface to rsync
+      using this module and wants an alternate exec wrapper.  This version
+      includes a variation on his patch.
+
 Tue Jan 18 17:05:00 CST 2005 ( leakin at dfw dot nostrum dot com )
 
-		* versioon 0.36: fix for "uninitialized value" warning submitted
-		thru rt.cpan.org.  Thanks go to the anonymous Debian user (HTH).
+      * versioon 0.36: fix for "uninitialized value" warning submitted
+      thru rt.cpan.org.  Thanks go to the anonymous Debian user (HTH).
 
 Wed Dec  8 18:33:45 CST 2004 ( leakin at dfw dot nostrum dot com )
 
-		* version 0.35: test 4 was failing due to bad pattern match in the
-		test code .no functional changes (error message changed for 2.6.3).
+      * version 0.35: test 4 was failing due to bad pattern match in the
+      test code. no functional changes (error message changed for 2.6.3).
 
 Thu Aug 12 20:45:43 CDT 2004 ( leakin at dfw dot nostrum dot com )
 
-		* version 0.34: added support for new options in 2.6.3: partial-dir,
-		checksum-seed, keep-dirlinks, inplace, ipv4, and ipv6.
+      * version 0.34: added support for new options in 2.6.3: partial-dir,
+      checksum-seed, keep-dirlinks, inplace, ipv4, and ipv6.
 
 Tue Jun  1 12:59:36 CDT 2004 ( leakin at dfw dot nostrum dot com )
 
       * version 0.33: Fixed a type-o in parsing of quote-dst tag.
-		Peter teStrake (peter dot testrake at tradingscreen dot com)
-		pointed out that the exec method did not protect itself from a
-		user-defined SIGCHLD handler and could miss the exit of rsync and
-		report a false error.  A local reset of the handler should protect
-		it and still leave the handler in place for the rest of the user
-		code.
+      Peter teStrake (peter dot testrake at tradingscreen dot com)
+      pointed out that the exec method did not protect itself from a
+      user-defined SIGCHLD handler and could miss the exit of rsync and
+      report a false error.  A local reset of the handler should protect
+      it and still leave the handler in place for the rest of the user
+      code.
 
 Sun Dec 21 03:18:26 CST 2003 ( leakin at dfw dot nostrum dot com )
 
