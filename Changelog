@@ -1,3 +1,19 @@
+Mon Jan 13 11:25:42 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.26: Added link-dest option (new in 2.5.6pre1).
+      I previously closed stdin of the forked rsync command since rsync
+      didn't really use it.  Now the include-from and exclude-from options
+      may be set to '-' and rsync will read the list from stdin.  I've
+      attempted to pass STDIN directly to rsync in case someone wants
+      to use this option.  In my simple tests the code works, but I have
+      not done extensive tests, and do not know if you can pass other data
+      such as passwords (not a good idea in terms of security).  This
+      may also have other side effects since STDIN could be a tty in some
+      instances and not in others (may cause the underlying rsh, ssh, or
+      other transport to behave differently during testing versus cron or
+      other unattended execution).  If this becomes a problem for anyone
+      I'll figure out some way to make it optional.
+
 Tue Jan  7 13:46:56 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.25: Tong Zhu <tongzhu@thereinc.com> found an error

@@ -23,7 +23,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.25 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.27 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -131,11 +131,11 @@ sub new {
       'scalar' => {qw(
          address         0   exclude-from    0   read-batch      0
          backup-dir      0   include-from    0   rsh             0
-         block-size      0   log-format      0   rsync-path      0
-         bwlimit         0   max-delete      0   suffix          0
-         compare-dest    0   modify-window   0   temp-dir        0
-         config          0   password-file   0   timeout         0
-         csum-length     0   port            0
+         block-size      0   link-dest       0   log-format      0
+         rsync-path      0   bwlimit         0   max-delete      0
+         suffix          0   compare-dest    0   modify-window   0
+         temp-dir        0   config          0   password-file   0
+         timeout         0   csum-length     0   port            0
       )},
       # these are not flags but counters, each time they appear it raises the
       # count, so we keep track and pass them the same number of times
@@ -447,9 +447,9 @@ sub exec {
       }
    }
    print STDERR "exec: @cmd\n" if $merged->{'debug'};
-   my $in=FileHandle->new; my $out=FileHandle->new; my $err=FileHandle->new;
+   my $out=FileHandle->new; my $err=FileHandle->new;
    $err->autoflush(1);
-   my $pid=eval{ open3 $in,$out,$err,@cmd };
+   my $pid=eval{ open3 \*STDIN,$out,$err,@cmd };
    $self->{lastcmd} = \@cmd;
    if ($@) {
       $self->{'realstatus'}=0;
@@ -457,7 +457,6 @@ sub exec {
       $self->{'err'}=[$@,"Execution of rsync failed.\n"];
       return 0;
    }
-   $in->close; # we don't use it and neither should rsync (at least not yet)
    my $rmask='';
    foreach my $fh ($err,$out) {
       my $tmask='';
