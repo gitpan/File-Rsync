@@ -1,3 +1,15 @@
+Sun Dec 21 03:18:26 CST 2003 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.32: Added support for new option in 2.6.0: --from0,
+      --no-relative, --no-implied-dirs, and --files-from.  A new
+      infun option has been added so a user-supplied function can print the
+      list to --files-from=-.  See the rsync man page and the pod doc for
+      more info.  Also fixed a bug underscores were not recognized as the
+      hyphen equivalent for quote_dst, quote_src and path_to_rsync.
+      An anonymous user submitted a fix where parens were needed due to
+      precedence problems when srchost is defined.  The fix is included
+      in this release.
+
 Tue Jul 29 22:13:50 CDT 2003 ( leakin at dfw dot nostrum dot com )
 
       * version 0.31: Bill Uhl ( buhl at web-services dot net ) sent a

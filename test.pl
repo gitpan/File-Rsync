@@ -69,7 +69,7 @@ system qw(rm -rf destdir);
       ($ret == 0
          && $rs->status != 0
          && @{$rs->err} > 0
-         && ${$rs->err}[0] =~/mkdir\s+\S+\s*:\s+No such file or directory\b/)
+         && ${$rs->err}[0] =~/:\s+No such file or directory\b/)
          || ($fail++,print "not ");
    }
    print "ok 5\n";

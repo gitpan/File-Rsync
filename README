@@ -1,12 +1,14 @@
 File-Rsync - A wrapper module for rsync(1) http://rsync.samba.org/rsync/
 
 *******************************************************************************
-Copyright (c) 2000-2001 Lee Eakin.  All rights reserved.
+Copyright (C) 2000-2004 Lee Eakin.  All rights reserved.
    This program is free software; you can redistribute it and/or modify
    it under the same terms as Perl itself.
 *******************************************************************************
 
-***************************** BUG NOTICE ************************************
+Updated to support new options on rsync 2.6.0 (especially --files-from).
+
+***************************** BUG ALERT *************************************
 *                                                                           *
 *   versions 0.27 - 0.30 passed STDIN to the rsync command to support some  *
 *   recent feature additions to rsync 2.5.6.  This caused some strange      *
@@ -16,13 +18,10 @@ Copyright (c) 2000-2001 Lee Eakin.  All rights reserved.
 
 Although I am the original author and maintainer, many of the bug fixes and
 improvements have come as either suggestions or patches from the perl
-community.  The full list of credits can be found in the Changelog file.
+community.  The contributors names can be found near the end of the POD doc,
+and full credits can be found in the Changelog file.
 There have been many helpful people making this a much better module than
 I could ever write on my own.
-
-Hopefully 0.30 will solve the occasional and mysterious hangs that have been
-so difficult to reproduce.  Paul Egan helped me cleanup and fix the select
-loop.  See the Changelog for details of all changes.
 
 QUICK START GUIDE:
 

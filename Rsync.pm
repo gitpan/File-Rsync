@@ -24,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION='0.31';
+$VERSION = '0.32';
 
 =head1 NAME
 
@@ -44,7 +44,7 @@ $obj->exec( { src => 'localdir', dest => 'rhost:remdir' } )
 =head1 DESCRIPTION
 
 Perl Convenience wrapper for the rsync(1) program.  Written for I<rsync-2.3.2>
-and updated for I<rsync-2.4.6> but should perform properly with most recent
+and updated for I<rsync-2.6.0> but should perform properly with most recent
 versions.
 
 =over 4
@@ -68,7 +68,7 @@ $obj = File::Rsync->new(\%options);
 Create a I<File::Rsync> object.  Any options passed at creation are stored
 in the object as defaults for all future I<exec> calls on that object.
 Options may be passed in the form of a hash and are the same as the long
-options in L<rsync> with the leading double-dash removed.  An additional
+options in I<rsync(1)> with the leading double-dash removed.  An additional
 option of B<path-to-rsync> also exists which can be used to override the
 hardcoded path to the rsync binary that is defined when the module is
 installed, and B<debug> which causes the module methods to print some
@@ -86,7 +86,7 @@ option needs an array reference as its value, since there cannot be
 duplicate keys in a hash.  There is an equivalent B<include> option.  Only
 an B<exclude> or B<include> option should be used, not both.  Use the '+ '
 or '- ' prefix trick to put includes in an B<exclude> array, or to put
-excludes in an B<include> array (see L<rsync> for details).
+excludes in an B<include> array (see I<rsync(1)> for details).
 Include/exclude options form an ordered list.  The order must be retained
 for proper execution.  There are also B<source> and B<dest> keys.  The key
 B<src> is also accepted as an equivalent to B<source>, and B<dst> or
@@ -103,46 +103,64 @@ value and the values in the B<source> array will be joined with a colon
 resulting in the double-colon required for server access.  The B<dest> key
 only takes a scalar since I<rsync> only accepts a single destination path.
 
+Version 2.6.0 of I<rsync(1)> provides a new B<files-from> option along with
+a few other supporting options (B<from0>, B<no-relative>, and
+B<no-implied-dirs>).  To support this wonderful new option at the level it
+deserves, this module now has an additional parameter.  If B<files-from> is
+set to '-' (meaning read from stdin) you can define B<infun> to be a
+reference to a function that prints your file list to the default file handle.
+The output from the function is attached to stdin of the rsync call during
+exec.  If B<infun> is defined it will be called regardless of the value of
+B<files-from>, so it can provide any data expected on stdin, but keep in mind
+that stdin will not be attached to a tty so it is not very useful for sending
+passwords (see the I<rsync(1)> and I<ssh(1)> man pages for ways to handle
+authentication).  The I<rsync(1)> man page has a more complete description of
+B<files-from>.  Also see L<File::Find> for ideas to use with B<files-from>
+and B<infun>.  The B<infun> option may also be used with the B<include-from>
+or B<exclude-from> settings, but this is generally more clumsy than using the
+B<include> or B<exclude> arrays.
+
 =back
 
 =cut
 
 sub new {
-   my $class=shift;
+   my $class = shift;
 
    # seed the options hash, booleans, scalars, excludes, source, dest, data,
    # status, stderr/stdout storage for last exec
-   my $self={
+   my $self = {
       # the full path name to the rsync binary
       'path-to-rsync' => $RsyncConfig{rsync_path},
       # these are the boolean flags to rsync, all default off, including them
       # in the args list turns them on
       'flag' => {qw(
-         archive           0  existing          0  owner             0
-         backup            0  force             0  partial           0 
-         blocking-io       0  group             0  perms             0 
-         checksum          0  hard-links        0  progress          0 
-         compress          0  help              0  recursive         0  
-         copy-links        0  ignore-errors     0  relative          0  
-         copy-unsafe-links 0  ignore-existing   0  safe-links        0  
-         cvs-exclude       0  ignore-times      0  size-only         0  
-         daemon            0  links             0  sparse            0  
-         delete            0  no-blocking-io    0  stats             0  
-         delete-after      0  no-detach         0  times             0  
-         delete-excluded   0  no-whole-file     0  update            0  
-         devices           0  numeric-ids       0  version           0  
-         dry-run           0  one-file-system   0  whole-file        0  
+         archive           0  force             0  one-file-system   0
+         backup            0  from0             0  whole-file        0
+         blocking-io       0  group             0  owner             0
+         checksum          0  hard-links        0  partial           0
+         compress          0  help              0  perms             0
+         copy-links        0  ignore-errors     0  progress          0
+         copy-unsafe-links 0  ignore-existing   0  recursive         0
+         cvs-exclude       0  ignore-times      0  relative          0
+         daemon            0  links             0  safe-links        0
+         delete            0  no-blocking-io    0  size-only         0
+         delete-after      0  no-detach         0  sparse            0
+         delete-excluded   0  no-implied-dirs   0  stats             0
+         devices           0  no-relative       0  times             0
+         dry-run           0  no-whole-file     0  update            0
+         existing          0  numeric-ids       0  version           0
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
-         address           0 include-from       0    rsh             0
-         backup-dir        0 link-dest          0    rsync-path      0
-         block-size        0 log-format         0    suffix          0
-         bwlimit           0 max-delete         0    temp-dir        0
-         compare-dest      0 modify-window      0    timeout         0
-         config            0 password-file      0    write-batch     0
-         csum-length       0 port               0 
-         exclude-from      0 read-batch         0 
+         address           0  files-from        0  read-batch        0
+         backup-dir        0  include-from      0  rsh               0
+         block-size        0  link-dest         0  rsync-path        0
+         bwlimit           0  log-format        0  suffix            0
+         compare-dest      0  max-delete        0  temp-dir          0
+         config            0  modify-window     0  timeout           0
+         csum-length       0  password-file     0  write-batch       0
+         exclude-from      0  port              0
       )},
       # these are not flags but counters, each time they appear it raises the
       # count, so we keep track and pass them the same number of times
@@ -173,12 +191,14 @@ sub new {
       # stdout from last exec in array format (messages from local rsync proc)
       'out'         => 0,
       'outfun'      => undef,
+      # function to prvide --*-from=- data via pipe
+      'infun'     => undef,
       # this flag changes error checking in 'exec' when called by 'list'
       'list'        => 0,
    };
    bless $self, $class; # bless it first so defopts can find out the class
    if (@_) {
-      &defopts($self,@_) or return undef;
+      &defopts($self,@_) or return;
    }
    return $self;
 }
@@ -193,7 +213,7 @@ $obj->defopts(@options);
 
 $obj->defopts(\%options);
 
-Set default options for future exec calls for the object.  See L<rsync>
+Set default options for future exec calls for the object.  See I<rsync(1)>
 for a complete list of valid options.  This is really the internal
 method that I<new> calls but you can use it too.  The B<verbose> and B<quiet>
 options to rsync are actually counters.  When assigning the perl hash-style
@@ -207,23 +227,23 @@ the proper number of options to rsync.
 sub defopts {
    # this method has now been split into 2 sub methods (parse and save)
    # _saveopts and _parseopts should only be used via defopts or exec
-   my $self=shift;
+   my $self = shift;
    &_saveopts($self,&_parseopts($self,@_));
 }
 
 sub _parseopts {
    # this method checks and converts it's args into a reference to a hash
    # of valid options and returns it to the caller
-   my $self=shift;
-   my $pkgname=ref $self;
-   my @opts=@_;
+   my $self = shift;
+   my $pkgname = ref $self;
+   my @opts = @_;
    my $opt;
-   my %OPT=(); # this is the hash we will return a ref to
+   my %OPT = (); # this is the hash we will return a ref to
 
    # make sure we are passed the proper number of args
    if (@opts == 1) {
-      $opt=shift;
-      if (my $reftype=ref $opt) {
+      $opt = shift;
+      if (my $reftype = ref $opt) {
          unless ($reftype eq 'HASH') {
             carp "$pkgname: invalid reference type ($reftype) in options";
             return 0;
@@ -236,43 +256,43 @@ sub _parseopts {
       carp "$pkgname: invalid number of options passed (must be key/value pairs)";
       return 0;
    } else {
-      $opt={@opts};
+      $opt = {@opts};
    }
 
    # now process the options given, we handle debug first since hashes do not
    # have a specific order, and it would not be set first even if we sorted
    if (exists $opt->{'debug'}) {
-      $OPT{'debug'}=$opt->{'debug'};
+      $OPT{'debug'} = $opt->{'debug'};
       print(STDERR "setting debug flag\n") if $OPT{'debug'};
    }
    foreach my $hashopt (keys %$opt) {
-      my $savopt=$hashopt;
-      $savopt=~tr/_/-/;
+      my $savopt = $hashopt;
+      $savopt =~ tr/_/-/;
       next if $hashopt eq 'debug'; # we did this one first (above)
       print STDERR "processing option: $hashopt\n"
          if $OPT{'debug'} or $self->{'debug'};
       if (exists $self->{'flag'}{$savopt}
             or exists $self->{'scalar'}{$savopt}
             or exists $self->{'counter'}{$savopt}) {
-         $OPT{$savopt}=$opt->{$hashopt};
+         $OPT{$savopt} = $opt->{$hashopt};
       } else {
-         my $tag='';
+         my $tag = '';
          if ($hashopt eq 'exclude' or $hashopt eq 'include') {
-            $tag=$hashopt;
+            $tag = $hashopt;
          } elsif ($hashopt eq 'source'
                or $hashopt eq 'src') {
-            $tag='source';
+            $tag = 'source';
          }
          if ($tag) {
-            if (my $reftype=ref $opt->{$hashopt}) {
+            if (my $reftype = ref $opt->{$hashopt}) {
                if ($reftype eq 'ARRAY') {
-                  $OPT{$tag}=$opt->{$hashopt};
+                  $OPT{$tag} = $opt->{$hashopt};
                } else {
                   carp "$pkgname: invalid reference type for $hashopt option";
                   return 0;
                }
             } elsif ( $tag eq 'source') {
-               $OPT{$tag}=$opt->{$hashopt};
+               $OPT{$tag} = $opt->{$hashopt};
             } else {
                carp "$pkgname: $hashopt is not a reference";
                return 0;
@@ -280,16 +300,17 @@ sub _parseopts {
          } elsif ($hashopt eq 'dest'
                or $hashopt eq 'destination'
                or $hashopt eq 'dst') {
-            $OPT{'dest'}=$opt->{$hashopt};
+            $OPT{'dest'} = $opt->{$hashopt};
 
-         } elsif ($hashopt eq 'path-to-rsync'
-               or $hashopt eq 'srchost'
-               or $hashopt eq 'quote-dst'
-               or $hashopt eq 'quote-src') {
-            $OPT{$savopt}=$opt->{$hashopt};
-         } elsif ($hashopt eq 'outfun' or $hashopt eq 'errfun') {
+         } elsif ($savopt eq 'path-to-rsync'
+               or $savopt eq 'srchost'
+               or $savopt eq 'quote-dst'
+               or $savopt eq 'quote-src') {
+            $OPT{$savopt} = $opt->{$hashopt};
+         } elsif ($hashopt eq 'outfun' or $hashopt eq 'errfun'
+               or $hashopt eq 'infun') {
             if (ref $opt->{$hashopt} eq 'CODE') {
-               $OPT{$hashopt}=$opt->{$hashopt};
+               $OPT{$hashopt} = $opt->{$hashopt};
             } else {
                carp "$pkgname: $hashopt option is not a function reference";
                return 0;
@@ -306,23 +327,23 @@ sub _parseopts {
 sub _saveopts {
    # this method saves the data from the hash passed to it in the object's
    # hash
-   my $self=shift;
-   my $pkgname=ref $self;
-   my $opts=shift;
+   my $self = shift;
+   my $pkgname = ref $self;
+   my $opts = shift;
    return 0 unless ref $opts eq 'HASH';
    foreach my $opt (keys %$opts) {
       if (exists $self->{'flag'}{$opt}) {
-         $self->{'flag'}{$opt}=$opts->{$opt};
+         $self->{'flag'}{$opt} = $opts->{$opt};
       } elsif (exists $self->{'scalar'}{$opt}) {
-         $self->{'scalar'}{$opt}=$opts->{$opt};
+         $self->{'scalar'}{$opt} = $opts->{$opt};
       } elsif (exists $self->{'counter'}{$opt}) {
-         $self->{'counter'}{$opt}=$opts->{$opt};
+         $self->{'counter'}{$opt} = $opts->{$opt};
       } elsif ($opt eq 'exclude' or $opt eq 'include'
             or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
-            or $opt eq 'outfun' or $opt eq 'errfun'
+            or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
             or $opt eq 'path-to-rsync' or $opt eq 'srchost'
             or $opt eq 'quote-dst' or $opt eq 'quote-src') {
-         $self->{$opt}=$opts->{$opt};
+         $self->{$opt} = $opts->{$opt};
       } else {
          carp "$pkgname: unknown option: $opt";
          return 0;
@@ -354,54 +375,54 @@ from I<rsync> and any output to stdout and stderr with the methods listed below.
 =cut
 
 sub exec {
-   my $self=shift;
-   my $pkgname=ref $self;
-   my $merged=0;
-   my $list=$self->{list};
-   $self->{list}=0 if $self->{list};
+   my $self = shift;
+   my $pkgname = ref $self;
+   my $merged = 0;
+   my $list = $self->{list};
+   $self->{list} = 0 if $self->{list};
    if (@_) { # If args are passed to exec then we have to merge the saved
       # (default) options with those passed, for any conflicts those passed
       # directly to exec take precidence, and perl-style options take
       # precidence over rsync command-line style options (because they offer
       # more flexibility)
-      my $execopts=&_parseopts($self,@_);
+      my $execopts = &_parseopts($self,@_);
       return 0 unless ref $execopts eq 'HASH';
-      my %runopts=();
+      my %runopts = ();
       # first copy the default info from $self
       foreach my $type (qw(flag scalar counter)) {
          foreach my $opt (keys %{$self->{$type}}) {
-            $runopts{$type}{$opt}=$self->{$type}{$opt};
+            $runopts{$type}{$opt} = $self->{$type}{$opt};
          }
       }
-      foreach my $opt (qw(path-to-rsync exclude include
-            source srchost debug dest outfun errfun quote-dst quote-src)) {
-         $runopts{$opt}=$self->{$opt};
+      foreach my $opt (qw(path-to-rsync exclude include source srchost debug
+            dest outfun errfun infun quote-dst quote-src)) {
+         $runopts{$opt} = $self->{$opt};
       }
       # now allow any args passed directly to exec to override
       foreach my $opt (keys %$execopts) {
          if (exists $runopts{'flag'}{$opt}) {
-            $runopts{'flag'}{$opt}=$execopts->{$opt};
+            $runopts{'flag'}{$opt} = $execopts->{$opt};
          } elsif (exists $runopts{'scalar'}{$opt}) {
-            $runopts{'scalar'}{$opt}=$execopts->{$opt};
+            $runopts{'scalar'}{$opt} = $execopts->{$opt};
          } elsif (exists $runopts{'counter'}{$opt}) {
-            $runopts{'counter'}{$opt}=$execopts->{$opt};
+            $runopts{'counter'}{$opt} = $execopts->{$opt};
          } elsif ($opt eq 'exclude' or $opt eq 'include'
                or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
-               or $opt eq 'outfun' or $opt eq 'errfun'
+               or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
                or $opt eq 'path-to-rsync' or $opt eq 'srchost'
                or $opt eq 'quoate-dst' or $opt eq 'quote-src') {
-            $runopts{$opt}=$execopts->{$opt};
+            $runopts{$opt} = $execopts->{$opt};
          } else {
             carp "$pkgname: unknown option: $opt";
             return 0;
          }
       }
-      $merged=\%runopts;
+      $merged = \%runopts;
    } else {
-      $merged=$self;
+      $merged = $self;
    }
 
-   my @cmd=($merged->{'path-to-rsync'});
+   my @cmd = ($merged->{'path-to-rsync'});
 
    foreach my $opt (sort keys %{$merged->{'flag'}}) {
       push @cmd,"--$opt" if $merged->{'flag'}{$opt};
@@ -410,7 +431,7 @@ sub exec {
       push @cmd,"--$opt=".$merged->{'scalar'}{$opt} if $merged->{'scalar'}{$opt};
    }
    foreach my $opt (sort keys %{$merged->{'counter'}}) {
-      for (my $i=0;$i<$merged->{'counter'}{$opt};$i++) {
+      for (my $i = 0;$i<$merged->{'counter'}{$opt};$i++) {
          push @cmd,"--$opt";
       }
    }
@@ -438,8 +459,8 @@ sub exec {
       } else {
          if ($merged->{'srchost'}) {
             push @cmd,$merged->{'srchost'}.':'.
-               $merged->{'quote-src'} ? "\"$merged->{'source'}\""
-                                      : $merged->{'source'};
+               ($merged->{'quote-src'} ? "\"$merged->{'source'}\""
+                                       : $merged->{'source'});
          } else {
             push @cmd,
                $merged->{'quote-src'} ? "\"$merged->{'source'}\""
@@ -471,39 +492,43 @@ sub exec {
       }
    }
    print STDERR "exec: @cmd\n" if $merged->{'debug'};
-   my $out=FileHandle->new; my $err=FileHandle->new;
+   my $out = FileHandle->new; my $err = FileHandle->new;
    $err->autoflush(1);
    $out->autoflush(1);
    my $pid;
    {
-      my $in=FileHandle->new;
-      $pid=eval{ open3 $in,$out,$err,@cmd };
+      my $in = FileHandle->new;
+      $in->autoflush(1);
+      $pid = eval{ open3 $in,$out,$err,@cmd };
+      $self->{lastcmd} = \@cmd;
+      if ($@) {
+         $self->{'realstatus'} = 0;
+         $self->{'status'} = 255;
+         $self->{'err'} = [$@,"Execution of rsync failed.\n"];
+         return 0;
+      }
+      if ($merged->{infun}) {
+         select((select($in),&{$merged->{infun}})[0]);
+      }
       $in->close;
-   }
-   $self->{lastcmd} = \@cmd;
-   if ($@) {
-      $self->{'realstatus'}=0;
-      $self->{'status'}=255;
-      $self->{'err'}=[$@,"Execution of rsync failed.\n"];
-      return 0;
+      sleep 1; # give open3 a chance to get the filehandles opened
    }
    my $odata = my $edata = '';
 
-   sleep 1; # give open3 a chance to get teh filehandles opened
    my $stream = { 
      $out->fileno => {
-        name => 'out',
-        data => \$odata,
-        buffer_tail => '',
-        block_size => ($out->stat)[11] || 1024,
-        handler => $merged->{outfun}
+        name         => 'out',
+        data         => \$odata,
+        buffer_tail  => '',
+        block_size   => ($out->stat)[11] || 1024,
+        handler      => $merged->{outfun}
      },         
      $err->fileno => {
-        name => 'err',
-        data => \$edata,
-        buffer_tail => '',
-        block_size => ($err->stat)[11] || 1024,
-        handler => $merged->{errfun}
+        name         => 'err',
+        data         => \$edata,
+        buffer_tail  => '',
+        block_size   => ($err->stat)[11] || 1024,
+        handler      => $merged->{errfun}
      }
    };
 
@@ -533,13 +558,13 @@ sub exec {
       }
    }
 
-   $self->{'out'}=$odata ? [ split /^/m,$odata ] : '';
-   $self->{'err'}=$edata ? [ split /^/m,$edata ] : '';
+   $self->{'out'} = $odata ? [ split /^/m,$odata ] : '';
+   $self->{'err'} = $edata ? [ split /^/m,$edata ] : '';
    $out->close;
    $err->close;
    waitpid $pid,0;
-   $self->{'realstatus'}=$?;
-   $self->{'status'}=$?>>8;
+   $self->{'realstatus'} = $?;
+   $self->{'status'} = $?>>8;
    return($self->{'status'} ? 0 : 1);
 }
 
@@ -569,13 +594,13 @@ comparing against another listing taken at a different point in time.
 =cut
 
 sub list {
-   my $self=shift;
+   my $self = shift;
    $self->{list}++;
    $self->exec(@_);
    if ($self->{'out'}) {
       return(wantarray ? @{$self->{'out'}} : $self->{'out'});
    } else {
-      return(wantarray ? () : $self->{'out'});
+      return;
    }
 }
 
@@ -592,7 +617,7 @@ Returns the status from last I<exec> call right shifted 8 bits.
 =cut
 
 sub status {
-   my $self=shift;
+   my $self = shift;
    return $self->{'status'};
 }
 
@@ -609,7 +634,7 @@ Returns the real status from last I<exec> call (not right shifted).
 =cut
 
 sub realstatus {
-   my $self=shift;
+   my $self = shift;
    return $self->{'realstatus'};
 }
 
@@ -632,11 +657,11 @@ to make it easier for you to parse that output for appropriate information.
 =cut
 
 sub err {
-   my $self=shift;
+   my $self = shift;
    if ($self->{'err'}) {
       return(wantarray ? @{$self->{'err'}} : $self->{'err'});
    } else {
-      return(wantarray ? () : $self->{'err'});
+      return;
    }
 }
 
@@ -657,11 +682,11 @@ output to stdout or an empty list.  I<rsync> sends all informational messages
 =cut
 
 sub out {
-   my $self=shift;
+   my $self = shift;
    if ($self->{'out'}) {
       return(wantarray ? @{$self->{'out'}} : $self->{'out'});
    } else {
-      return(wantarray ? () : $self->{'out'});
+      return;
    }
 }
 
@@ -682,17 +707,17 @@ a scalar context it returns a space-seperated string.
 =cut
 
 sub lastcmd {
-   my $self=shift;
+   my $self = shift;
    if ($self->{lastcmd}) {
       return wantarray ? @{$self->{lastcmd}} : join ' ',@{$self->{lastcmd}};
    } else {
-      return(wantarray ? () : '');
+      return;
    }
 }
 
 =head1 Author
 
-Lee Eakin E<lt>leakin@nostrum.comE<gt>
+Lee Eakin E<lt>leakin@dfw.nostrum.comE<gt>
 
 =head1 Credits
 
