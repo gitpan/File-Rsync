@@ -1,3 +1,14 @@
+Thu May 10 22:28:28 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.18: Many thanks to Andreas Koenig
+      <andreas.koenig@dubravka.kbx.de> for setting me straight on the
+      architecture specific versus the arch-independent directory usage,
+      and for explaining why this wasn't showing up in the by-module
+      listings.  The tar file now has a recognizable .pm file in it for
+      proper CPAN distribution.  There is also a File::Rsync::Config.pm
+      in the arch-specific dir where the build process stores the path
+      to the rsync executable.
+
 Mon May  7 01:07:44 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.17: I decided it is better for the out and err methods

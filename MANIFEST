@@ -1,8 +1,9 @@
 Changelog
+Config.in
 MANIFEST
 Makefile.PL
 README
-Rsync.in
+Rsync.pm
 TODO
 makepm.PL
 test.pl

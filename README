@@ -23,6 +23,10 @@ using this module, and no real problems, I will be bumping the version number
 to 1.0 soon unless someone finds problems.  As always, suggestions for
 improvement are always greatly appreciated.
 
+Thanks to Andreas Keonig for explaining how to get this into the by-module
+listing properly, and helping me avoid possible problems by utilizing the
+arch-specific @INC dir to store the path to rsync itself.
+
 See the Changelog for details of all changes.
 
 QUICK START GUIDE:

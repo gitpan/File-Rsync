@@ -17,11 +17,12 @@ use FileHandle;
 use IPC::Open3 qw(open3);
 use POSIX ":sys_wait_h";
 use Carp 'carp';
+use File::Rsync::Config;
 
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.17 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.18 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -67,8 +68,7 @@ the object as defaults for all future I<exec> call on that object.  Options
 may be passed in the form of a hash and are the same as the long options in
 L<rsync> with the leading doublt-dash removed.  An additional option of
 B<path-to-rsync> also exists which can be used to override the hardcoded
-default of
-# @@ F<RSYNC_PATH> (this is actually defined when the module is built),
+path to the rsync binary that is defined when the module is installed,
 and B<debug> which causes the module methods to print some debugging
 information to STDERR.  The B<outfun> and B<errfun> options take a function
 reference.  The function is called once for each line of output from L<rsync>
@@ -107,7 +107,7 @@ sub new {
    # status, stderr/stdout storage for last exec
    my $self={
       # the full path name to the rsync binary
-# @@      'path-to-rsync' => '/usr/local/bin/rsync',
+      'path-to-rsync' => $RsyncConfig{rsync_path},
       # these are the boolean flags to rsync, all default off, including them
       # in the args list turns them on
       'flag' => {qw(

@@ -6,7 +6,7 @@ use Config;
 
 $NAME         = 'File::Rsync';
 $DISTNAME     = 'File-Rsync';
-$VERSION_FROM = 'Rsync.in';
+$VERSION_FROM = 'Rsync.pm';
 $AUTHOR       = 'Lee Eakin <leakin@dfw.nostrum.com>';
 $ABSTRACT     = 'Wrapper module for rsync(1) http://rsync.samba.org/';
 
@@ -16,9 +16,10 @@ WriteMakefile(
       DISTNAME       => $DISTNAME,
       AUTHOR         => $AUTHOR,
       ABSTRACT       => $ABSTRACT,
-      PL_FILES       => { 'makepm.PL' => 'Rsync.pm' },
-      PM             => { 'Rsync.pm' => '$(INST_LIBDIR)/Rsync.pm' },
+      PL_FILES       => { 'makepm.PL' => 'Config.pm' },
+      PM             => { 'Rsync.pm'  => '$(INST_LIBDIR)/Rsync.pm',
+     			  'Config.pm' => '$(INST_ARCHLIBDIR)/Rsync/Config.pm' },
       dist           => { COMPRESS => 'gzip', SUFFIX => 'gz' },
-      realclean      => { FILES => 'Rsync.pm' },
+      realclean      => { FILES => 'Config.pm' },
 );
 

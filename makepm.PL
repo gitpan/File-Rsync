@@ -27,11 +27,10 @@ chomp $ans;
 $RSYNC=$ans || $RSYNC;
 $RSYNC=~s/\\/\\\\/g;
 $RSYNC=~s/\'/\\\'/g;
-open IN,'Rsync.in' or die "Cannot read Rsync.in.in: $!\n";
-open OUT,'>Rsync.pm' or die "Cannot write Rsync.pm: $!\n";
+open IN,'Config.in' or die "Cannot read Config.in: $!\n";
+open OUT,'>Config.pm' or die "Cannot write Config.pm: $!\n";
 while (<IN>) {
-   if (/^# @@(\s+'path-to-rsync'\s*=>)/) { print OUT "$1 '$RSYNC',\n" }
-   elsif (/^# @@\s+F<RSYNC_PATH>(.*)/)      { print OUT "F<$RSYNC>$1\n" }
+   if (/^(\s*rsync_path\s*=>)/) { print OUT "$1 '$RSYNC',\n" }
    else                                  { print OUT }
 }
 close IN;
