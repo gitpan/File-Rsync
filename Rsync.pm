@@ -3,12 +3,12 @@
 #      __
 #     /\ \ From the mind of
 #    /  \ \
-#   / /\ \ \_____ Lee Eakin  <Leakin@dfw.Nostrum.com>
-#  /  \ \ \______\       or  <Leakin@japh.net>
-# / /\ \ \/____  /       or  <Lee@Eakin.Org>
-# \ \ \ \____\/ / Wrapper module for the rsync program
-#  \ \ \/____  /  rsync can be found at http://rsync.samba.org/rsync/
-#   \ \____\/ /
+#   / /\ \ \_____ Lee Eakin  ( Leakin at dfw dot Nostrum dot com )
+#  /  \ \ \______\       or  ( Leakin at cpan dot org )
+# / /\ \ \/____  /       or  ( Leakin at japh dot net )
+# \ \ \ \____\/ /        or  ( Lee at Eakin dot Org )
+#  \ \ \/____  /  Wrapper module for the rsync program
+#   \ \____\/ /   rsync can be found at http://rsync.samba.org/rsync/
 #    \/______/
 
 package File::Rsync;
@@ -24,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION='0.30';
+$VERSION='0.31';
 
 =head1 NAME
 
@@ -65,38 +65,43 @@ $obj = File::Rsync->new(@options);
 
 $obj = File::Rsync->new(\%options);
 
-Create a I<File::Rsync> object.  Any options passed at creation are stored in
-the object as defaults for all future I<exec> call on that object.  Options
-may be passed in the form of a hash and are the same as the long options in
-L<rsync> with the leading double-dash removed.  An additional option of
-B<path-to-rsync> also exists which can be used to override the hardcoded
-path to the rsync binary that is defined when the module is installed,
-and B<debug> which causes the module methods to print some debugging
-information to STDERR.  The B<outfun> and B<errfun> options take a function
-reference.  The function is called once for each line of output from the
-I<rsync> program with the output line passed in as the first argument, the
-second arg is either 'out' or 'err' depending on the source.  This makes it
-possible to use the same function for both and still determine where the output
-came from.  Options may also be passed as a reference to a hash.  The
-B<exclude> option needs an array reference as its value, since there cannot be
-duplicate keys in a hash.  There is an equivalent B<include> option.  Only an
-B<exclude> or B<include> option should be used, not both.  Use the '+ ' or '- '
-prefix trick to put includes in an B<exclude> array, or to put excludes in an
-B<include> array (see L<rsync> for details).  Include/exclude options form an
-ordered list.  The order must be retained for proper execution.  There are also
-B<source> and B<dest> keys.  The key B<src> is also accepted as an equivalent
-to B<source>, and B<dst> or B<destination> may be used as equivalents to
-B<dest>.  The B<source> option may take a scalar or an array reference.  If the
-source is the local system then multiple B<source> paths are allowed.  In this
-case an array reference should be used.  There is also a method for passing
-multiple source paths to a remote system.  This method may be triggered in this
-module by passing the remote hostname to the B<srchost> key and passing an
-array reference to the B<source> key.  If the source host is being accessed via
-an Rsync server, the remote hostname should have a single trailing colon on the
-name.  When rsync is called, the B<srchost> value and the values in the
-B<source> array will be joined with a colon resulting in the double-colon
-required for server access.  The B<dest> key only takes a scalar since I<rsync>
-only accepts a single destination path.
+Create a I<File::Rsync> object.  Any options passed at creation are stored
+in the object as defaults for all future I<exec> calls on that object.
+Options may be passed in the form of a hash and are the same as the long
+options in L<rsync> with the leading double-dash removed.  An additional
+option of B<path-to-rsync> also exists which can be used to override the
+hardcoded path to the rsync binary that is defined when the module is
+installed, and B<debug> which causes the module methods to print some
+debugging information to STDERR.  There are also 2 options to wrap the
+source and/or destination paths in double-quotes.  They are B<quote-src>
+and B<quote-dest>, and may be useful in protecting the paths from shell
+expansion (particularly useful for paths containing spaces).  The
+B<outfun> and B<errfun> options take a function reference.  The function
+is called once for each line of output from the I<rsync> program with the
+output line passed in as the first argument, the second arg is either
+'out' or 'err' depending on the source.  This makes it possible to use the
+same function for both and still determine where the output came from.
+Options may also be passed as a reference to a hash.  The B<exclude>
+option needs an array reference as its value, since there cannot be
+duplicate keys in a hash.  There is an equivalent B<include> option.  Only
+an B<exclude> or B<include> option should be used, not both.  Use the '+ '
+or '- ' prefix trick to put includes in an B<exclude> array, or to put
+excludes in an B<include> array (see L<rsync> for details).
+Include/exclude options form an ordered list.  The order must be retained
+for proper execution.  There are also B<source> and B<dest> keys.  The key
+B<src> is also accepted as an equivalent to B<source>, and B<dst> or
+B<destination> may be used as equivalents to B<dest>.  The B<source>
+option may take a scalar or an array reference.  If the source is the
+local system then multiple B<source> paths are allowed.  In this case an
+array reference should be used.  There is also a method for passing
+multiple source paths to a remote system.  This method may be triggered in
+this module by passing the remote hostname to the B<srchost> key and
+passing an array reference to the B<source> key.  If the source host is
+being accessed via an Rsync server, the remote hostname should have a
+single trailing colon on the name.  When rsync is called, the B<srchost>
+value and the values in the B<source> array will be joined with a colon
+resulting in the double-colon required for server access.  The B<dest> key
+only takes a scalar since I<rsync> only accepts a single destination path.
 
 =back
 
@@ -113,30 +118,31 @@ sub new {
       # these are the boolean flags to rsync, all default off, including them
       # in the args list turns them on
       'flag' => {qw(
-         archive           0   existing          0   partial           0
-         backup            0   force             0   perms             0
-         blocking-io       0   group             0   progress          0
-         checksum          0   hard-links        0   recursive         0
-         compress          0   help              0   relative          0
-         copy-links        0   ignore-errors     0   safe-links        0
-         copy-unsafe-links 0   ignore-times      0   size-only         0
-         cvs-exclude       0   links             0   sparse            0
-         daemon            0   no-blocking-io    0   stats             0
-         delete            0   no-detach         0   times             0
-         delete-after      0   no-whole-file     0   update            0
-         delete-excluded   0   numeric-ids       0   version           0
-         devices           0   one-file-system   0   whole-file        0
-         dry-run           0   owner             0   write-batch       0
+         archive           0  existing          0  owner             0
+         backup            0  force             0  partial           0 
+         blocking-io       0  group             0  perms             0 
+         checksum          0  hard-links        0  progress          0 
+         compress          0  help              0  recursive         0  
+         copy-links        0  ignore-errors     0  relative          0  
+         copy-unsafe-links 0  ignore-existing   0  safe-links        0  
+         cvs-exclude       0  ignore-times      0  size-only         0  
+         daemon            0  links             0  sparse            0  
+         delete            0  no-blocking-io    0  stats             0  
+         delete-after      0  no-detach         0  times             0  
+         delete-excluded   0  no-whole-file     0  update            0  
+         devices           0  numeric-ids       0  version           0  
+         dry-run           0  one-file-system   0  whole-file        0  
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
-         address         0   exclude-from    0   read-batch      0
-         backup-dir      0   include-from    0   rsh             0
-         block-size      0   link-dest       0   log-format      0
-         rsync-path      0   bwlimit         0   max-delete      0
-         suffix          0   compare-dest    0   modify-window   0
-         temp-dir        0   config          0   password-file   0
-         timeout         0   csum-length     0   port            0
+         address           0 include-from       0    rsh             0
+         backup-dir        0 link-dest          0    rsync-path      0
+         block-size        0 log-format         0    suffix          0
+         bwlimit           0 max-delete         0    temp-dir        0
+         compare-dest      0 modify-window      0    timeout         0
+         config            0 password-file      0    write-batch     0
+         csum-length       0 port               0 
+         exclude-from      0 read-batch         0 
       )},
       # these are not flags but counters, each time they appear it raises the
       # count, so we keep track and pass them the same number of times
@@ -158,6 +164,9 @@ sub new {
       'lastcmd'     => undef,
       # whether or not to print debug statements
       'debug'       => 0,
+      # double-quote source and/or destination paths
+      'quote-src'   => 0,
+      'quote-dst'   => 0,
       # stderr from last exec in array format (messages from remote rsync proc)
       'err'         => 0,
       'errfun'      => undef,
@@ -242,16 +251,16 @@ sub _parseopts {
       next if $hashopt eq 'debug'; # we did this one first (above)
       print STDERR "processing option: $hashopt\n"
          if $OPT{'debug'} or $self->{'debug'};
-      if (exists $self->{'flag'}{$savopt} or
-            exists $self->{'scalar'}{$savopt} or
-            exists $self->{'counter'}{$savopt}) {
+      if (exists $self->{'flag'}{$savopt}
+            or exists $self->{'scalar'}{$savopt}
+            or exists $self->{'counter'}{$savopt}) {
          $OPT{$savopt}=$opt->{$hashopt};
       } else {
          my $tag='';
          if ($hashopt eq 'exclude' or $hashopt eq 'include') {
             $tag=$hashopt;
-         } elsif ($hashopt eq 'source' or
-               $hashopt eq 'src') {
+         } elsif ($hashopt eq 'source'
+               or $hashopt eq 'src') {
             $tag='source';
          }
          if ($tag) {
@@ -268,13 +277,15 @@ sub _parseopts {
                carp "$pkgname: $hashopt is not a reference";
                return 0;
             }
-         } elsif ($hashopt eq 'dest' or
-               $hashopt eq 'destination' or
-               $hashopt eq 'dst') {
-               $OPT{'dest'}=$opt->{$hashopt};
+         } elsif ($hashopt eq 'dest'
+               or $hashopt eq 'destination'
+               or $hashopt eq 'dst') {
+            $OPT{'dest'}=$opt->{$hashopt};
 
-         } elsif ($hashopt eq 'path-to-rsync' or
-               $hashopt eq 'srchost') {
+         } elsif ($hashopt eq 'path-to-rsync'
+               or $hashopt eq 'srchost'
+               or $hashopt eq 'quote-dst'
+               or $hashopt eq 'quote-src') {
             $OPT{$savopt}=$opt->{$hashopt};
          } elsif ($hashopt eq 'outfun' or $hashopt eq 'errfun') {
             if (ref $opt->{$hashopt} eq 'CODE') {
@@ -306,10 +317,11 @@ sub _saveopts {
          $self->{'scalar'}{$opt}=$opts->{$opt};
       } elsif (exists $self->{'counter'}{$opt}) {
          $self->{'counter'}{$opt}=$opts->{$opt};
-      } elsif ($opt eq 'exclude' or $opt eq 'include' or
-            $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug' or
-            $opt eq 'outfun' or $opt eq 'errfun' or
-            $opt eq 'path-to-rsync' or $opt eq 'srchost') {
+      } elsif ($opt eq 'exclude' or $opt eq 'include'
+            or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
+            or $opt eq 'outfun' or $opt eq 'errfun'
+            or $opt eq 'path-to-rsync' or $opt eq 'srchost'
+            or $opt eq 'quote-dst' or $opt eq 'quote-src') {
          $self->{$opt}=$opts->{$opt};
       } else {
          carp "$pkgname: unknown option: $opt";
@@ -362,7 +374,7 @@ sub exec {
          }
       }
       foreach my $opt (qw(path-to-rsync exclude include
-            source srchost debug dest outfun errfun)) {
+            source srchost debug dest outfun errfun quote-dst quote-src)) {
          $runopts{$opt}=$self->{$opt};
       }
       # now allow any args passed directly to exec to override
@@ -373,10 +385,11 @@ sub exec {
             $runopts{'scalar'}{$opt}=$execopts->{$opt};
          } elsif (exists $runopts{'counter'}{$opt}) {
             $runopts{'counter'}{$opt}=$execopts->{$opt};
-         } elsif ($opt eq 'exclude' or $opt eq 'include' or
-               $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug' or
-               $opt eq 'outfun' or $opt eq 'errfun' or
-               $opt eq 'path-to-rsync' or $opt eq 'srchost') {
+         } elsif ($opt eq 'exclude' or $opt eq 'include'
+               or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
+               or $opt eq 'outfun' or $opt eq 'errfun'
+               or $opt eq 'path-to-rsync' or $opt eq 'srchost'
+               or $opt eq 'quoate-dst' or $opt eq 'quote-src') {
             $runopts{$opt}=$execopts->{$opt};
          } else {
             carp "$pkgname: unknown option: $opt";
@@ -414,15 +427,23 @@ sub exec {
    if ($merged->{'source'}) {
       if (ref $merged->{'source'}) {
          if ($merged->{'srchost'}) {
-            push @cmd,$merged->{'srchost'}.':'.join ' ',@{$merged->{'source'}};
+            push @cmd, $merged->{'srchost'}.':'.join ' ',
+               $merged->{'quote-src'} ? map { "\"$_\"" } @{$merged->{'source'}}
+                                      : @{$merged->{'source'}};
          } else {
-            push @cmd,@{$merged->{'source'}};
+            push @cmd,
+               $merged->{'quote-src'} ? map { "\"$_\"" } @{$merged->{'source'}}
+                                      : @{$merged->{'source'}};
          }
       } else {
          if ($merged->{'srchost'}) {
-            push @cmd,$merged->{'srchost'}.':'.$merged->{'source'};
+            push @cmd,$merged->{'srchost'}.':'.
+               $merged->{'quote-src'} ? "\"$merged->{'source'}\""
+                                      : $merged->{'source'};
          } else {
-            push @cmd,$merged->{'source'};
+            push @cmd,
+               $merged->{'quote-src'} ? "\"$merged->{'source'}\""
+                                      : $merged->{'source'};
          }
       }
    } elsif ($merged->{'srchost'} and $list) {
@@ -441,7 +462,9 @@ sub exec {
    }
    unless ($list) {
       if ($merged->{'dest'}) {
-         push @cmd,$merged->{'dest'};
+         push @cmd,
+            $merged->{'quote-dst'} ? "\"$merged->{'dest'}\""
+                                   : $merged->{'dest'};
       } else {
          carp "$pkgname: option 'source' specified without 'dest' option";
          return 0;
@@ -450,7 +473,13 @@ sub exec {
    print STDERR "exec: @cmd\n" if $merged->{'debug'};
    my $out=FileHandle->new; my $err=FileHandle->new;
    $err->autoflush(1);
-   my $pid=eval{ open3 \*STDIN,$out,$err,@cmd };
+   $out->autoflush(1);
+   my $pid;
+   {
+      my $in=FileHandle->new;
+      $pid=eval{ open3 $in,$out,$err,@cmd };
+      $in->close;
+   }
    $self->{lastcmd} = \@cmd;
    if ($@) {
       $self->{'realstatus'}=0;
@@ -460,6 +489,7 @@ sub exec {
    }
    my $odata = my $edata = '';
 
+   sleep 1; # give open3 a chance to get teh filehandles opened
    my $stream = { 
      $out->fileno => {
         name => 'out',
@@ -689,6 +719,10 @@ Tong Zhu
 Paul Egan
 
 Ronald J Kimball
+
+James CE Johnson
+
+Bill Uhl
 
 =head1 Inspiration and Assistance
 

@@ -1,29 +1,52 @@
-Mon Jun  9 17:39:42 CDT 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+Tue Jul 29 22:13:50 CDT 2003 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.31: Bill Uhl ( buhl at web-services dot net ) sent a
+      patch to add the missing ignore-existing option and make write-batch
+      a scalar option (both were oversights on my part).  He also
+      suggested quoting the source paths.  Since this could break intended
+      actions, There are now 2 options to do this if desired.  The
+      quote-src and quote-dst flags will add double-quotes around each
+      path in the source or the destination when set.  This should help
+      avoid with pathnames containing spaces.  James CE Johnson sent a
+      patch to add the no-stdin flag since calling the module under
+      mod_perl was having problems.  Bill also reported problems on win32
+      and I found strange behaviour myself during some tests, so I have
+      backed-out the passing of stdin (from 0.27) entirely.
+
+Tue Jun 10 14:41:54 CDT 2003 Lee Eakin  ( leakin at dfw dot nostrum dot com )
+
+      * version 0.30: Paul Egan sent a patch that does a much better
+      job of cleaning up the select loop.  I was still not taking full
+      advantage of the features of IO::Select or IO::Handle.  Thanks
+      go to Paul for a much simplified loop, and hopefully an end to
+      the hangs (at least those due to the perl code).
+
+Mon Jun  9 17:39:42 CDT 2003 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.29: Paul Egan had another suggestion I liked very much.
       I switched to using IO::Select rather than calling select directly.
-      I've always hated the ugly vec code that must be added in order to
-      use select.  It clutters the program with lots of unrelated but
-      essential cruft.  The module keeps all that separate from what is
-      going on in the rsync wrapper.  Paul was still seeing a hang in certain
-      cases, and Ronald J Kimball <rjk@linguist.thayer.dartmouth.edu> was
-      having similar problems.  Both were seeing a hang on the eof tests,
+      I've always hated the ugly vec code that must be added in order to use
+      select.  It clutters the program with lots of unrelated but essential
+      cruft.  The module keeps all that separate from what is going on in the
+      rsync wrapper.  Paul was still seeing a hang in certain cases, and
+      Ronald J Kimball ( rjk at linguist dot thayer dot dartmouth dot edu )
+      was having similar problems.  Both were seeing a hang on the eof tests,
       so I removed them (eof does not play well with sysread, but we need
       sysread to make sure we don't block).  I have not been able to make it
       hang (at least not yet).
 
-Thu May 29 21:33:07 CDT 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+Thu May 29 21:33:07 CDT 2003 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
-      * version 0.28: Paul Egan <paulegan@mail.com> found one of the
-      cases where the module could block, and provided a patch to fix it.
-      The cost is a going thru select again after each block is read, but
-      he was able to prove it stops the hang.  Paul also suggested an
-      improvement on the sysread.  I am now using the block size of the
-      file descriptor (defaulting back to 1024 if that fails for some
-      reason).  Many thanks to Paul for not only finding a way to
-      reproduce the hang, but also finding a fix.
+      * version 0.28: Paul Egan ( paulegan at mail dot com ) found one of the
+      cases where the module could block, and provided a patch to fix it.  The
+      cost is a going thru select again after each block is read, but he was
+      able to prove it stops the hang.  Paul also suggested an improvement on
+      the sysread.  I am now using the block size of the file descriptor
+      (defaulting back to 1024 if that fails for some reason).  Many thanks to
+      Paul for not only finding a way to reproduce the hang, but also finding
+      a fix.
 
-Sat Feb  1 23:03:55 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+Sat Feb  1 23:03:55 CST 2003 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.27: got into too big a rush and forgot to test.
       The STDIN hack caused IPC::Open3 to spew, so I had to change
@@ -33,7 +56,7 @@ Sat Feb  1 23:03:55 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
       if I move to Subversion for revision control, since it's versions
       are handled in a different manner.
 
-Mon Jan 13 11:25:42 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+Mon Jan 13 11:25:42 CST 2003 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.26: Added link-dest option (new in 2.5.6pre1).
       I previously closed stdin of the forked rsync command since rsync
@@ -49,69 +72,68 @@ Mon Jan 13 11:25:42 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
       other unattended execution).  If this becomes a problem for anyone
       I'll figure out some way to make it optional.
 
-Tue Jan  7 13:46:56 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+Tue Jan  7 13:46:56 CST 2003 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
-      * version 0.25: Tong Zhu <tongzhu@thereinc.com> found an error
+      * version 0.25: Tong Zhu ( tongzhu at thereinc dot com ) found an error
       where use of errfun and/or outfun exposed possible use of uninitialized
-      variables (those used to break output into individual lines).
-      Thanks for pointing out my error, and the useful 'diff' output making
-      my coding error easy to track down and fix.
+      variables (those used to break output into individual lines).  Thanks
+      for pointing out my error, and the useful 'diff' output making my coding
+      error easy to track down and fix.
 
-Wed Dec 11 17:57:25 CST 2002 Lee Eakin  <leakin@dfw.nostrum.com>
+Wed Dec 11 17:57:25 CST 2002 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
-      * version 0.24: Heiko Jansen <heiko_jansen@web.de> found an error
-      in the exec function where I was accessing the errfun and outfun
-      functions from the main object, and ignoring them if they were
-      passed to 'exec'.  Thanks for pointing out the error, hopefully
-      this will work much better for you know.
+      * version 0.24: Heiko Jansen ( heiko_jansen at web dot de ) found an
+      error in the exec function where I was accessing the errfun and outfun
+      functions from the main object, and ignoring them if they were passed to
+      'exec'.  Thanks for pointing out the error, hopefully this will work
+      much better for you know.
 
-Wed Dec  4 22:38:14 CST 2002 Lee Eakin  <leakin@dfw.nostrum.com>
+Wed Dec  4 22:38:14 CST 2002 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.23: I got 3 separate reports of hangs, but cannot reproduce
       the error (yet).  Added a trap and more eof tests to hopefully catch
       and exit properly.
 
-Thu Mar 14 23:19:35 CST 2002 Lee Eakin  <leakin@dfw.nostrum.com>
+Thu Mar 14 23:19:35 CST 2002 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.22: added options for rsync 2.5.4, no-blocking-io, no-detach,
       and no-whole-file.
 
-Thu Dec 20 13:52:33 CST 2001 Lee Eakin  <leakin@dfw.nostrum.com>
+Thu Dec 20 13:52:33 CST 2001 Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.21: added rsync+ options from 2.4.7pre4/2.5.0, read-batch
       and write-batch.
 
-      Thanks to Jonathan Pelletier <jonathan.pelletier@matrox.com> for
-      catching (and supply a fix for) an output message loss.  This version
-      contains a variation on his patch.  Jonathan also suggested the new
-      method 'lastcmd' to return the last 'rsync' command passed to the system
-      for devugging and error messages.
+      Thanks to Jonathan Pelletier ( jonathan dot pelletier at matrox dot com
+      ) for catching (and supply a fix for) an output message loss.  This
+      version contains a variation on his patch.  Jonathan also suggested the
+      new method 'lastcmd' to return the last 'rsync' command passed to the
+      system for devugging and error messages.
 
-Fri Sep  7 15:18:58 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+Fri Sep  7 15:18:58 CDT 2001  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.20: made changes to test.pl so failed tests would
       return non-zero exit and actually fail the tests.  Also corrected
       several type-os in the POD documentation (thanks to Joe Smith
-      <Joe.Smith@wcom.com> for pointing them out).
+      ( Joe dot Smith at wcom dot com ) for pointing them out).
 
-Wed May 16 21:11:31 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+Wed May 16 21:11:31 CDT 2001  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.19: discovered the new makefile was installing
       into the wrong path.  It should follow the proper naming convention
       now.
 
-Thu May 10 22:28:28 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+Thu May 10 22:28:28 CDT 2001  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
-      * version 0.18: Many thanks to Andreas Koenig
-      <andreas.koenig@dubravka.kbx.de> for setting me straight on the
-      architecture specific versus the arch-independent directory usage,
-      and for explaining why this wasn't showing up in the by-module
-      listings.  The tar file now has a recognizable .pm file in it for
-      proper CPAN distribution.  There is also a File::Rsync::Config.pm
-      in the arch-specific dir where the build process stores the path
-      to the rsync executable.
+      * version 0.18: Many thanks to Andreas Koenig ( andreas dot koenig at
+      dubravka dot kbx dot de ) for setting me straight on the architecture
+      specific versus the arch-independent directory usage, and for explaining
+      why this wasn't showing up in the by-module listings.  The tar file now
+      has a recognizable .pm file in it for proper CPAN distribution.  There
+      is also a File::Rsync::Config.pm in the arch-specific dir where the
+      build process stores the path to the rsync executable.
 
-Mon May  7 01:07:44 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+Mon May  7 01:07:44 CDT 2001  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.17: I decided it is better for the out and err methods
       to return any collected output regardless of whther or not an output
@@ -120,21 +142,21 @@ Mon May  7 01:07:44 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
       keeps me from having to work out what these methods should return
       if called when an output function has been defined.
 
-Thu Feb 15 21:25:23 CST 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+Thu Feb 15 21:25:23 CST 2001  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
-      * version 0.16: James Mello <kingjamm@colltech.com> submitted a patch
-      to add a 'list' function, and educated me on the interesting aspect
-      of calling rsync without a destination in order to obtain an 'ls -l'
-      or 'ls -lr' (with -r or -a) style output.  Rather than duplicating
-      the exec function I made modifications to it and built a wrapper
-      to get the list functionality.  This has all kinds of possibilities.
-      Many thanks to James for the great idea and the education on an
-      option I had never explored.
+      * version 0.16: James Mello ( kingjamm at colltech dot com ) submitted a
+      patch to add a 'list' function, and educated me on the interesting
+      aspect of calling rsync without a destination in order to obtain an 'ls
+      -l' or 'ls -lr' (with -r or -a) style output.  Rather than duplicating
+      the exec function I made modifications to it and built a wrapper to get
+      the list functionality.  This has all kinds of possibilities.  Many
+      thanks to James for the great idea and the education on an option I had
+      never explored.
 
       use File::Rsync;$rs=File::Rsync->new(srchost => 'localhost:');
       print $rs->list; will list available modules on the local daemon.
       
-Tue Nov 28 10:22:50 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+Tue Nov 28 10:22:50 CST 2000  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.15: After more thought and discussion with Boris we decided
       a second arg of either 'out' or 'err' should be passed to the functions
@@ -144,19 +166,19 @@ Tue Nov 28 10:22:50 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
       sub {print shift}' and 'errfun => sub {print shift}' to keep from
       printing the source string. (version 0.14 was not released to CPAN)
 
-Fri Nov 17 23:03:00 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+Fri Nov 17 23:03:00 CST 2000  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
-      * version 0.14: Per suggestion from Boris Goldowsky
-      <boris@range.infoplease.com>, added 'outfun' and 'errfun' options.
-      If you supply a function (CODE) reference to these the stderr and stdout
-      from rsync is passed to these functions one output line at a time and
-      is not collected internally for post examination.  Providing a function
-      like 'outfun => sub {print @_}' will cause each line to be printed as
-      they arrive.  A function like 'outfun => sub {print "."}' will simply
-      shows progress dots like cpio's -V option.  Thanks to Boris for the
+      * version 0.14: Per suggestion from Boris Goldowsky ( boris at range dot
+      infoplease dot com ), added 'outfun' and 'errfun' options.  If you
+      supply a function (CODE) reference to these the stderr and stdout from
+      rsync is passed to these functions one output line at a time and is not
+      collected internally for post examination.  Providing a function like
+      'outfun => sub {print @_}' will cause each line to be printed as they
+      arrive.  A function like 'outfun => sub {print "."}' will simply shows
+      progress dots like cpio's -V option.  Thanks to Boris for the
       suggestion.  Sorry it took me so long to get it added.
 
-Sat Sep 16 23:32:59 CDT 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+Sat Sep 16 23:32:59 CDT 2000  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.13: added suport for new flags blocking-io and ignore-errors,
       as well as scalars bwlimit, max-delete, and modify-window.  I also
@@ -164,7 +186,7 @@ Sat Sep 16 23:32:59 CDT 2000  Lee Eakin  <leakin@dfw.nostrum.com>
       This makes additions a bit more difficult, but makes reading and
       verifying the options much easier (at least for me).
 
-Tue Feb 29 17:41:14 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+Tue Feb 29 17:41:14 CST 2000  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.12: pervious version fixed blocking, but was not clean
       and caused the tests to fail in odd ways.  This should be better.
@@ -173,12 +195,12 @@ Tue Feb 29 17:41:14 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
       similar to Tk.  This allows the use of bareword keys in hashes without
       being mis-interpreted as subraction.
 
-Fri Feb 18 17:45:13 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+Fri Feb 18 17:45:13 CST 2000  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.11: fixed a blocking problem in the exec function
       If one of the output pipes filled up it hung forever (oops).
 
-Mon Feb  7 14:05:37 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+Mon Feb  7 14:05:37 CST 2000  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.10: removed comments about rsync not considering some things
       to be errors.  This appears to be a bug in 2.3.2 on Linux.  It has been
@@ -202,7 +224,7 @@ Mon Feb  7 14:05:37 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
       will assemble them as a single argument to rsync.  If 'srchost' is null
       then the 'source' array is passed to exec as seperate arguments.
 
-Wed Dec  1 21:55:44 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+Wed Dec  1 21:55:44 CST 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.09: removed bareword keys in hashes (5.00404 doesn't like
       my use of 'scalar' as a key)
@@ -211,7 +233,7 @@ Wed Dec  1 21:55:44 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
       return status between Solaris and Linux.  I'll need to look into why
       one detects the error and the other doesn't (rsync itself, not perl).
 
-Tue Nov 30 20:46:00 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+Tue Nov 30 20:46:00 CST 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.07:
 
@@ -223,7 +245,7 @@ Tue Nov 30 20:46:00 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
       * changed saveopts and parseopts to begin with underscore since they
       are for internal use only.
 
-Sun Nov 28 19:41:31 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+Sun Nov 28 19:41:31 CST 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.06:
 
@@ -234,7 +256,7 @@ Sun Nov 28 19:41:31 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
 
       * other misc cleanup and clarification of code and documentation
 
-Sun Nov 28 02:47:34 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+Sun Nov 28 02:47:34 CST 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.05: major re-organization and re-writing of internal
       functions to add the ability to pass a hash reference for perl-style
@@ -269,7 +291,7 @@ Sun Nov 28 02:47:34 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
 
       * added test.pl script for 'make test'.
 
-Sun Nov 21 02:18:56 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+Sun Nov 21 02:18:56 CST 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.04: added missing 'next' that would cause a parsing
       error if -P was used.
@@ -279,12 +301,12 @@ Sun Nov 21 02:18:56 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
       as a network-based program I had a mental block when considering other
       groups.
 
-Fri Nov 19 13:25:18 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+Fri Nov 19 13:25:18 CST 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.03: --address should be a scalar, not a flag (the
       rsync man page is unclear on this).
 
-Wed Nov 17 21:20:16 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+Wed Nov 17 21:20:16 CST 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.02:
 
@@ -305,6 +327,6 @@ Wed Nov 17 21:20:16 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
 
       * remove any chance of clobbering $_ (mostly paranoia I hope)
 
-Tue Jun 15 15:27:20 CDT 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+Tue Jun 15 15:27:20 CDT 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.01: (initial) based on rsync 2.3.1

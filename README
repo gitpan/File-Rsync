@@ -6,31 +6,23 @@ Copyright (c) 2000-2001 Lee Eakin.  All rights reserved.
    it under the same terms as Perl itself.
 *******************************************************************************
 
-Perl-style options may be passed as a hash reference.  Thanks to Greg Ward
-for the suggestion.  There is a limited test suite as well.
+***************************** BUG NOTICE ************************************
+*                                                                           *
+*   versions 0.27 - 0.30 passed STDIN to the rsync command to support some  *
+*   recent feature additions to rsync 2.5.6.  This caused some strange      *
+*   behaviour including hangs.  That feature has been backed-out in 0.31    *
+*                                                                           *
+*****************************************************************************
 
-You may now specify your own output functions.  Your custom function is called
-for each line of output.  The line is the first argument to the function.  The
-second argument is either 'err' or 'out' so the same function may be used for
-both and can determine where the line came from.  Thanks to Boris Goldowsky
-for the suggestion.
+Although I am the original author and maintainer, many of the bug fixes and
+improvements have come as either suggestions or patches from the perl
+community.  The full list of credits can be found in the Changelog file.
+There have been many helpful people making this a much better module than
+I could ever write on my own.
 
-James Mello pointed out that if no destination is given, rsync prints a list
-of files that would be processed.  To that end, a list function has been added.
-
-Several more bugs have been found and squashed.  The full list of credits
-to everyone who has contributed improvements and fixes can be found in the
-changelog file.  There have been many helpful people making this a much better
-module than I could ever write on my own.
-
-Thanks to Andreas Keonig for explaining how to get this into the by-module
-listing properly, and helping me avoid possible problems by utilizing the
-arch-specific @INC dir to store the path to rsync itself.
-
-NOTE:  If you installed 0.18, the install path was incorrect.  You will
-most likely need to 'make install UNINST=1' to clean up properly.
-
-See the Changelog for details of all changes.
+Hopefully 0.30 will solve the occasional and mysterious hangs that have been
+so difficult to reproduce.  Paul Egan helped me cleanup and fix the select
+loop.  See the Changelog for details of all changes.
 
 QUICK START GUIDE:
 
