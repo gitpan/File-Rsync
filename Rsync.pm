@@ -24,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.33';
+$VERSION = '0.34';
 
 =head1 NAME
 
@@ -135,21 +135,23 @@ sub new {
       # these are the boolean flags to rsync, all default off, including them
       # in the args list turns them on
       'flag' => {qw(
-         archive           0  force             0  one-file-system   0
-         backup            0  from0             0  whole-file        0
-         blocking-io       0  group             0  owner             0
-         checksum          0  hard-links        0  partial           0
-         compress          0  help              0  perms             0
-         copy-links        0  ignore-errors     0  progress          0
-         copy-unsafe-links 0  ignore-existing   0  recursive         0
-         cvs-exclude       0  ignore-times      0  relative          0
-         daemon            0  links             0  safe-links        0
-         delete            0  no-blocking-io    0  size-only         0
-         delete-after      0  no-detach         0  sparse            0
-         delete-excluded   0  no-implied-dirs   0  stats             0
-         devices           0  no-relative       0  times             0
-         dry-run           0  no-whole-file     0  update            0
-         existing          0  numeric-ids       0  version           0
+         archive           0  group             0  one-file-system   0 
+         backup            0  hard-links        0  whole-file        0 
+         blocking-io       0  help              0  owner             0 
+         checksum          0  ignore-errors     0  partial           0 
+         compress          0  ignore-existing   0  perms             0 
+         copy-links        0  ignore-times      0  progress          0 
+         copy-unsafe-links 0  inplace           0  recursive         0 
+         cvs-exclude       0  ipv4              0  relative          0 
+         daemon            0  ipv6              0  safe-links        0 
+         delete            0  keep-dirlinks     0  size-only         0 
+         delete-after      0  links             0  sparse            0 
+         delete-excluded   0  no-blocking-io    0  stats             0 
+         devices           0  no-detach         0  times             0 
+         dry-run           0  no-implied-dirs   0  update            0 
+         existing          0  no-relative       0  version           0 
+         force             0  no-whole-file     0
+         from0             0  numeric-ids       0
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
@@ -157,9 +159,10 @@ sub new {
          backup-dir        0  include-from      0  rsh               0
          block-size        0  link-dest         0  rsync-path        0
          bwlimit           0  log-format        0  suffix            0
-         compare-dest      0  max-delete        0  temp-dir          0
-         config            0  modify-window     0  timeout           0
-         csum-length       0  password-file     0  write-batch       0
+         checksum-seed     0  max-delete        0  temp-dir          0 
+         compare-dest      0  modify-window     0  timeout           0 
+         config            0  partia-dir        0  write-batch       0 
+         csum-length       0  password-file     0
          exclude-from      0  port              0
       )},
       # these are not flags but counters, each time they appear it raises the

@@ -1,3 +1,8 @@
+Thu Aug 12 20:45:43 CDT 2004 ( leakin at dfw dot nostrum dot com )
+
+		* version 0.34: added support for new options in 2.6.3: partial-dir,
+		checksum-seed, keep-dirlinks, inplace, ipv4, and ipv6.
+
 Tue Jun  1 12:59:36 CDT 2004 ( leakin at dfw dot nostrum dot com )
 
       * version 0.33: Fixed a type-o in parsing of quote-dst tag.
