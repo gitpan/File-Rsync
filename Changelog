@@ -1,3 +1,10 @@
+Fri Sep  7 15:18:58 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.20: made changes to test.pl so failed tests would
+      return non-zero exit and actually fail the tests.  Also corrected
+      several type-os in the POD documentation (thanks to Joe SMith
+      <Joe.Smith@wcom.com> for pointing them out).
+
 Wed May 16 21:11:31 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.19: discovered the new makefile was installing

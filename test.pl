@@ -1,12 +1,13 @@
 #!/usr/local/bin/perl -w
 
 BEGIN { $|=1; print "1..6\n" }
-END { print "not ok 1\n" unless $loaded }
+END { print("not ok 1\n"),exit 1 unless $loaded }
 
 use File::Rsync;
 use strict;
-use vars qw($loaded);
+use vars qw($loaded $fail);
 $loaded=1;
+$fail=0;
 print STDERR "\nNOTE: expect 'badoption' message for test 6\n\n";
 print "ok 1\n";
 
@@ -19,7 +20,7 @@ system qw(rm -rf destdir);
       print "not ";
    } else {
       my $ret=$rs->exec;
-      ($ret == 1 && $rs->status == 0 && ! $rs->err) || print "not ";
+      ($ret == 1 && $rs->status == 0 && ! $rs->err) || ($fail++,print "not ");
    }
    print "ok 2\n";
 }
@@ -29,10 +30,11 @@ system qw(rm -rf destdir);
 {
    my $rs=File::Rsync->new(archive => 1);
    unless ($rs) {
+      $fail++;
       print "not ";
    } else {
       my $ret=$rs->exec(src => 'blib', dest => 'destdir');
-      ($ret == 1 && $rs->status == 0 && ! $rs->err) || print "not ";
+      ($ret == 1 && $rs->status == 0 && ! $rs->err) || ($fail++,print "not ");
    }
    print "ok 3\n";
 }
@@ -42,13 +44,14 @@ system qw(rm -rf destdir);
 {
    my $rs=File::Rsync->new(archive => 1);
    unless ($rs) {
+      $fail++;
       print "not ";
    } else {
       no strict;
       my $ret=$rs->exec(src => 'some-non-existant-path-name', dest => 'destdir');
          (@{$rs->err} == 1
          && $rs->err->[0] =~ /:\s+No such file or directory$/)
-         || print "not ";
+         || ($fail++,print "not ");
    }
    print "ok 4\n";
 }
@@ -58,6 +61,7 @@ system qw(rm -rf destdir);
 {
    my $rs=File::Rsync->new(archive => 1);
    unless ($rs) {
+      $fail++;
       print "not ";
    } else {
       no strict;
@@ -66,7 +70,7 @@ system qw(rm -rf destdir);
          && $rs->status != 0
          && @{$rs->err} > 0
          && ${$rs->err}[0] =~/^mkdir\s+\S+\s*:\s+No such file or directory\b/)
-         || print "not ";
+         || ($fail++,print "not ");
    }
    print "ok 5\n";
 }
@@ -75,8 +79,9 @@ system qw(rm -rf destdir);
 # invalid option
 {
    my $rs=File::Rsync->new(archive => 1, badoption => 1);
-   $rs && print "not ";
+   $rs && ($fail++,print "not ");
    print "ok 6\n";
 }
 
 system qw(rm -rf destdir);
+exit 1 if $fail;

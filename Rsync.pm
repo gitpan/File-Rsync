@@ -22,7 +22,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.19 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.20 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -66,31 +66,31 @@ $obj = File::Rsync->new(\%options);
 Create a I<File::Rsync> object.  Any options passed at creation are stored in
 the object as defaults for all future I<exec> call on that object.  Options
 may be passed in the form of a hash and are the same as the long options in
-L<rsync> with the leading doublt-dash removed.  An additional option of
+L<rsync> with the leading double-dash removed.  An additional option of
 B<path-to-rsync> also exists which can be used to override the hardcoded
 path to the rsync binary that is defined when the module is installed,
 and B<debug> which causes the module methods to print some debugging
 information to STDERR.  The B<outfun> and B<errfun> options take a function
-reference.  The function is called once for each line of output from L<rsync>
-with the output line passed in as the first argument, the second arg is either
-'out' or 'err' depending on the source.  This makes it possible to use the same
-function for both and still determine where the output came from.  Options
-may also be passed as a reference to a hash.  The B<exclude> option needs an
-array reference as its value, since there cannot be duplicate keys in a hash.
-There is an equivalent B<include> option.  Only an B<exclude> or B<include>
-option should be used, not both.  Use the '+ ' or '- ' prefix trick to put
-includes in an B<exclude> array, or to put excludes in an B<include> array
-(see L<rsync> for details).  Include/exclude options from an ordered list.
-The order must be retained for proper execution.  There are also B<source> and
-B<dest> keys.  The key B<src> is also accepted as an equivalent to B<source>,
-and B<dst> or B<destination> may be used as equivalents to B<dest>.  The
-B<source> option may take a scalar or an array reference.  If the source is the
-local system then multiple B<source> paths are allowed.  In this case an array
-reference should be used.  There is also a method for passing multiple source
-paths to a remote system.  This method may be triggered in this module by
-passing the remote hostname to the B<srchost> key and passing an array
-reference to the B<source> key.  If the source host is being accessed via an
-Rsync server, the remote hostname should have a single trailing colon on the
+reference.  The function is called once for each line of output from the
+I<rsync> program with the output line passed in as the first argument, the
+second arg is either 'out' or 'err' depending on the source.  This makes it
+possible to use the same function for both and still determine where the output
+came from.  Options may also be passed as a reference to a hash.  The
+B<exclude> option needs an array reference as its value, since there cannot be
+duplicate keys in a hash.  There is an equivalent B<include> option.  Only an
+B<exclude> or B<include> option should be used, not both.  Use the '+ ' or '- '
+prefix trick to put includes in an B<exclude> array, or to put excludes in an
+B<include> array (see L<rsync> for details).  Include/exclude options form an
+ordered list.  The order must be retained for proper execution.  There are also
+B<source> and B<dest> keys.  The key B<src> is also accepted as an equivalent
+to B<source>, and B<dst> or B<destination> may be used as equivalents to
+B<dest>.  The B<source> option may take a scalar or an array reference.  If the
+source is the local system then multiple B<source> paths are allowed.  In this
+case an array reference should be used.  There is also a method for passing
+multiple source paths to a remote system.  This method may be triggered in this
+module by passing the remote hostname to the B<srchost> key and passing an
+array reference to the B<source> key.  If the source host is being accessed via
+an Rsync server, the remote hostname should have a single trailing colon on the
 name.  When rsync is called, the B<srchost> value and the values in the
 B<source> array will be joined with a colon resulting in the double-colon
 required for server access.  The B<dest> key only takes a scalar since I<rsync>
