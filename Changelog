@@ -1,3 +1,24 @@
+Thu May 29 21:33:07 CDT 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.28: Paul Egan <paulegan@yahoo.com> found one of the
+      cases where the module could block, and provided a patch to fix it.
+      The cost is a going thru select again after each block is read, but
+      he was able to prove it stops the hang.  Paul also suggested an
+      improvement on the sysread.  I am now using the block size of the
+      file descriptor (defaulting back to 1024 if that fails for some
+      reason).  Many thanks to Paul for not only finding a way to
+      reproduce the hang, but also finding a fix.
+
+Sat Feb  1 23:03:55 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.27: got into too big a rush and forgot to test.
+      The STDIN hack caused IPC::Open3 to spew, so I had to change
+      it to glob to work properly.  0.26 was never released, but
+      now I'm thinking seriously about breaking the link between
+      the module version and RCS.  I'll have to do this anyway
+      if I move to Subversion for revision control, since it's versions
+      are handled in a different manner.
+
 Mon Jan 13 11:25:42 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.26: Added link-dest option (new in 2.5.6pre1).

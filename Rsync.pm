@@ -23,7 +23,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.27 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.28 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -466,13 +466,15 @@ sub exec {
    my $odata = my $edata = my $opart = my $epart = '';
    my $done;
    local $SIG{CHLD} = sub { $done++ }; # this works due to closure rules
+   my $oblksz = ($out->stat())[11] || 1024;
+   my $eblksz = ($err->stat())[11] || 1024;
    while (not $done) {
       my $nfound=select(my $rout=$rmask,undef,undef,1);
       next unless $nfound;
       my @bits=split(//,unpack('b*',$rout));
       if ($bits[$out->fileno]) {
          my $data;
-         while (my $c=sysread $out,$data,1024) {
+         if (my $c=sysread $out,$data,$oblksz) {
             if ($merged->{'outfun'}) {
                my $npart='';
                $npart=$1 if ($data=~s/([^\n]+)\z//s);
@@ -487,7 +489,7 @@ sub exec {
       }
       if ($bits[$err->fileno]) {
          my $data;
-         while (my $c=sysread $err,$data,1024) {
+         if (my $c=sysread $err,$data,$eblksz) {
             if ($merged->{'errfun'}) {
                my $npart='';
                $npart=$1 if ($data=~s/([^\n]+)\z//s);
@@ -505,7 +507,7 @@ sub exec {
    # check them again in case we dropped out early due to sigchild
    unless ($out->eof) {
       my $data;
-      while (my $c=sysread $out,$data,1024) {
+      while (my $c=sysread $out,$data,$oblksz) {
          if ($merged->{'outfun'}) {
             my $npart=$1 if ($data=~s/([^\n]+)\z//s);
             foreach my $line (split /^/m,$opart.$data) {
@@ -519,7 +521,7 @@ sub exec {
    }
    unless ($err->eof) {
       my $data;
-      while (my $c=sysread $err,$data,1024) {
+      while (my $c=sysread $err,$data,$eblksz) {
          if ($merged->{'errfun'}) {
             my $npart=$1 if ($data=~s/([^\n]+)\z//s);
             foreach my $line (split /^/m,$epart.$data) {
@@ -708,6 +710,12 @@ Andreas Koenig
 Joe Smith
 
 Jonathan Pelletier
+
+Heiko Jansen
+
+Tong Zhu
+
+Paul Egan
 
 =head1 Inspiration and Assistance
 
