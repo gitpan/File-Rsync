@@ -11,11 +11,4 @@ Figure out a scheme for including extended docs.  The new perl-style options
       should also be included (like one using Find.pm to build a complex
       include/exclude list).
 
-Consider dropping rsync command-line style options, and make perl-style hash
-      the only way to specify options.  If perl-style becomes the only way to
-      pass options, then requiring the hash reference could be dropped.  In
-      that case it could accept the hash style options as a list or as a hash
-      reference (I'm hoping for feedback on this).  I kept the command-line
-      style from the earlier version for myself since I have production code
-      that uses it, but I could easily update that code to use the hash (and
-      probably will very soon).
+Other suggestions welcome

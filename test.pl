@@ -1,13 +1,13 @@
 #!/usr/local/bin/perl -w
 
-BEGIN { $|=1; print "1..7\n" }
+BEGIN { $|=1; print "1..6\n" }
 END { print "not ok 1\n" unless $loaded }
 
 use File::Rsync;
 use strict;
 use vars qw($loaded);
 $loaded=1;
-print STDERR "\nNOTE: expect 'badoption' message for test 7\n\n";
+print STDERR "\nNOTE: expect 'badoption' message for test 6\n\n";
 print "ok 1\n";
 
 system qw(rm -rf destdir);
@@ -38,33 +38,18 @@ system qw(rm -rf destdir);
 }
 
 system qw(rm -rf destdir);
-# mixed arg types
-{
-   my $rs=File::Rsync->new({archive => 1}, 'blib', 'destdir');
-   unless ($rs) {
-      print "not ";
-   } else {
-      my $ret=$rs->exec;
-      $ret == 1 && $rs->status == 0 && ! $rs->err || print "not ";
-   }
-   print "ok 4\n";
-}
-
-system qw(rm -rf destdir);
 # non-existant source
 {
    my $rs=File::Rsync->new({archive => 1});
    unless ($rs) {
       print "not ";
    } else {
-      my $ret=$rs->exec('some-non-existant-path-name','destdir');
-      # odd: on Solaris $ret == 0, $rs->status == 11
-      #    but on Linux $ret == 1, $rs->status == 0
+      my $ret=$rs->exec(src => 'some-non-existant-path-name', dest => 'destdir');
          @{$rs->err} == 1
-         && ${$rs->err}[0] =~ /^\S+\s*:\s+No such file or directory$/
+         && ${$rs->err}[0] =~ /:\s+No such file or directory$/
          || print "not ";
    }
-   print "ok 5\n";
+   print "ok 4\n";
 }
 
 system qw(rm -rf destdir);
@@ -74,14 +59,14 @@ system qw(rm -rf destdir);
    unless ($rs) {
       print "not ";
    } else {
-      my $ret=$rs->exec('blib','destdir/subdir');
+      my $ret=$rs->exec(src => 'blib', dest => 'destdir/subdir');
       $ret == 0
          && $rs->status != 0
          && @{$rs->err} > 0
          && ${$rs->err}[0] =~/^mkdir\s+\S+\s*:\s+No such file or directory\b/
          || print "not ";
    }
-   print "ok 6\n";
+   print "ok 5\n";
 }
 
 system qw(rm -rf destdir);
@@ -89,7 +74,7 @@ system qw(rm -rf destdir);
 {
    my $rs=File::Rsync->new({archive => 1, badoption => 1});
    $rs && print "not ";
-   print "ok 7\n";
+   print "ok 6\n";
 }
 
 system qw(rm -rf destdir);

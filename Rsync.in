@@ -2,9 +2,9 @@
 #      __
 #     /\ \ From the mind of
 #    /  \ \
-#   / /\ \ \_____ Lee Eakin  <LEakin@DFW.Nostrum.COM>
-#  /  \ \ \______\       or  <Lee@Eakin.ORG>
-# / /\ \ \/____  /
+#   / /\ \ \_____ Lee Eakin  <Leakin@dfw.Nostrum.com>
+#  /  \ \ \______\       or  <Leakin@japh.net>
+# / /\ \ \/____  /       or  <Lee@Eakin.Org>
 # \ \ \ \____\/ / Wrapper module for the rsync program
 #  \ \ \/____  /  rsync can be found at http://rsync.samba.org/rsync/
 #   \ \____\/ /
@@ -20,7 +20,7 @@ use Carp 'carp';
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.9 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.10 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -29,14 +29,6 @@ File::Rsync - perl module interface to rsync(1) F<http://rsync.samba.org/rsync/>
 =head1 SYNOPSIS
 
 use File::Rsync;
-
-$obj = File::Rsync->new(qw(-az C<-e> /usr/local/bin/ssh
-         --rsync-path /usr/local/bin/rsync));
-
-$obj->exec(qw(localdir rhost:remdir))
-         or warn "rsync failed\n";
-
-   or
 
 $obj = File::Rsync->new( { archive => 1, compress => 1,
          rsh => '/usr/local/bin/ssh',
@@ -48,7 +40,8 @@ $obj->exec( { src => 'localdir', dest => 'rhost:remdir' } )
 =head1 DESCRIPTION
 
 Perl Convenience wrapper for the rsync(1) program.  Written for I<rsync-2.3.2>
-but should perform properly with most recent versions.
+and updated for I<rsync-2.4.1> but should perform properly with most recent
+versions.
 
 =over 4
 
@@ -70,32 +63,32 @@ $obj = File::Rsync->new(\%options);
 
 Create a I<File::Rsync> object.  Any options passed at creation are stored in
 the object as defaults for all future I<exec> call on that object.  Options
-may be passed as a list and are the same as those in L<rsync> with the
-addition of B<--path-to-rsync> which can be used to override the hardcoded
+may be passed in the form of a hash and are the same as the long options in
+L<rsync> with the leading doublt-dash removed.  An additional option of
+B<path-to-rsync> also exists which can be used to override the hardcoded
 default of
 # @@ F<RSYNC_PATH> (this is actually defined when the module is built),
-and B<--debug> which causes the module methods to print some debugging
-information to STDERR.  Options may also be passed as a hash reference which
-should be more familiar to perl programmers.  In this case the keys of the
-hash are the same as the long options to I<rsync> without the leading
-double-dash.  There are additional keys of B<path-to-rsync>, and B<debug>
-similar to those above.  The B<exclude> option needs an array reference as its
-value, since there cannot be duplicate keys in a hash.  There is an equivalent
-B<include> option.  Only an B<exclude> or B<include> option should be used, not
-both.  Use the '+ ' or '- ' prefix trick to put includes in an B<exclude>
-array, or to put excludes in an B<include> array (see L<rsync> for details).
-Include/exclude options from an ordered list.  The order must be retained for
-proper execution.  There are also B<source> and B<dest> keys.  The key B<src>
-is also accepted as an equivalent to B<source>, and B<dst> or B<destination>
-may be used as equivalents to B<dest>.  The B<source> option may take a scalar
-or an array reference.  If the source is the local system then multiple
-B<source> paths are allowed.  In this case an array reference should be used.
-The B<dest> key only takes a scalar since I<rsync> only accepts a single
-destination path.  Since I<rsync> command-line style options are passed as a
-list, and perl-style options are passed as a hash reference they can be mixed.
-However, in the case of conflicts, the perl-style options take precedence.
-Also, if the perl-style B<source> or B<dest> keys are used they must both be
-used.  They override, and cannot be mixed with the command-line style paths.
+and B<debug> which causes the module methods to print some debugging
+information to STDERR.  Options may also be passed as a reference to a hash.
+The B<exclude> option needs an array reference as its value, since there cannot
+be duplicate keys in a hash.  There is an equivalent B<include> option.  Only
+an B<exclude> or B<include> option should be used, not both.  Use the '+ ' or
+'- ' prefix trick to put includes in an B<exclude> array, or to put excludes in
+an B<include> array (see L<rsync> for details).  Include/exclude options from
+an ordered list.  The order must be retained for proper execution.  There are
+also B<source> and B<dest> keys.  The key B<src> is also accepted as an
+equivalent to B<source>, and B<dst> or B<destination> may be used as
+equivalents to B<dest>.  The B<source> option may take a scalar or an array
+reference.  If the source is the local system then multiple B<source> paths
+are allowed.  In this case an array reference should be used.  There is also
+a method for passing multiple source paths to a remote system.  This method
+may be triggered in this module by passing the remote hostname to the
+B<srchost> key and passing an array reference to the B<source> key.  If the
+source host is being accessed via an Rsync server, the remote hostname
+should have a single trailing colon on the name.  When rsync is called, the
+B<srchost> value and the values in the B<source> array will be jioned with a
+colon resulting in the double-colon required for server access.  The B<dest>
+key only takes a scalar since I<rsync> only accepts a single destination path.
 
 =back
 
@@ -116,22 +109,23 @@ sub new {
          compress          0   copy-links        0   copy-unsafe-links 0
          cvs-exclude       0   daemon            0   delete            0
          delete-after      0   delete-excluded   0   devices           0
-         dry-run           0   force             0   group             0
-         hard-links        0   help              0   ignore-times      0
-         links             0   numeric-ids       0   one-file-system   0
-         owner             0   partial           0   perms             0
-         progress          0   recursive         0   relative          0
-         safe-links        0   size-only         0   sparse            0
-         stats             0   times             0   update            0
-         version           0   whole-file        0
+         dry-run           0   existing          0   force             0
+         group             0   hard-links        0   help              0
+         ignore-times      0   links             0   numeric-ids       0
+         one-file-system   0   owner             0   partial           0
+         perms             0   progress          0   recursive         0
+         relative          0   safe-links        0   size-only         0
+         sparse            0   stats             0   times             0
+         update            0   version           0   whole-file        0
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
-         address         0   block-size      0   compare-dest      0
-         config          0   csum-length     0   exclude-from      0
-         include-from    0   log-format      0   password-file     0
-         port            0   rsh             0   rsync-path        0
-         suffix          0   temp-dir        0   timeout           0
+         address         0   backup-dir      0   block-size      0
+         compare-dest    0   config          0   csum-length     0
+         exclude-from    0   include-from    0   log-format      0
+         password-file   0   port            0   rsh             0
+         rsync-path      0   suffix          0   temp-dir        0
+         timeout         0
       )},
       # these are not flags but counters, each time they appear it raises the
       # count, so we keep track and pass them the same number of times
@@ -140,12 +134,12 @@ sub new {
       # specifies that it is an ordered list so we must preserve that order
       'exclude'     => [],
       'include'     => [],
-      # source host and/or path names (perl style args)
+      # hostname of source, used if 'source' is an array reference
+      'srchost'     => '',
+      # source host and/or path names
       'source'      => '',
-      # destination host and/or path (perl style args)
+      # destination host and/or path
       'dest'        => '',
-      # source and destination host and/or pathnames (rsync style args)
-      'data'        => [],
       # return status from last exec
       'status'      => 0,
       'realstatus'  => 0,
@@ -179,12 +173,10 @@ $obj->defopts(\%options);
 
 Set default options for future exec calls for the object.  See L<rsync>
 for a complete list of valid options.  This is really the internal
-method that I<new> calls but you can use it too.  There is no way to turn
-off boolean options using I<rsync> command-line style options short of creating
-another object.  If you use the perl-style hash reference the booleans can be
-turned on and off as expected.  The B<verbose> and B<quiet> options are actually
-counters.  Each time they are passed the counter is incremented.  When using
-the perl-style options you may specify the counter value directly.
+method that I<new> calls but you can use it too.  The B<verbose> and B<quiet>
+options to rsync are actually counters.  When assigning the perl hash-style
+options you may specify the counter value directly and the module will pass
+the proper number of options to rsync.
 
 =back
 
@@ -203,171 +195,75 @@ sub _parseopts {
    my $self=shift;
    my $pkgname=ref $self;
    my @opts=@_;
+   my $opt;
    my %OPT=(); # this is the hash we will return a ref to
 
-   # need a conversion table in case someone uses the short options
-   my %short=(qw(
-      B  block-size      C  cvs-exclude     D  devices         H  hard-links
-      I  ignore-times    L  copy-links      R  relative        T  temp-dir
-      W  whole-file      a  archive         b  backup          c  checksum
-      e  rsh             g  group           h  help            l  links
-      n  dry-run         o  owner           p  perms           q  quiet
-      r  recursive       s  sparse          t  times           u  update
-      v  verbose         x  one-file-system
-      z  compress        P  partial:progress
-   ));
-   while (my $opt=shift @opts) {
-      my $arg='';
-      print(STDERR "setting debug flag\n"),$OPT{'debug'}=1,next
-         if $opt eq '--debug';
+   # make sure we are passed the proper number of args
+   if (@opts == 1) {
+      $opt=shift;
       if (my $reftype=ref $opt) {
-         if ($reftype eq 'HASH') {
-            # we were handed a reference to a hash, the caller prefers
-            # perl-style long args instead of the rsync command-line style
-            if (exists $opt->{'debug'}) {
-               $OPT{'debug'}=$opt->{'debug'};
-               print(STDERR "setting debug flag\n") if $OPT{'debug'};
-            }
-            foreach my $hashopt (keys %$opt) {
-               next if $hashopt eq 'debug'; # we did this one first (above)
-               print STDERR "processing option: $hashopt\n"
-                  if $OPT{'debug'} or $self->{'debug'};
-               if (exists $self->{'flag'}{$hashopt} or
-                     exists $self->{'scalar'}{$hashopt} or
-                     exists $self->{'counter'}{$hashopt}) {
-                  $OPT{$hashopt}=$opt->{$hashopt};
-               } else {
-                  my $tag='';
-                  if ($hashopt eq 'exclude' or $hashopt eq 'include') {
-                     $tag=$hashopt;
-                  } elsif ($hashopt eq 'source' or
-                        $hashopt eq 'src') {
-                     $tag='source';
-                  }
-                  if ($tag) {
-                     if (my $reftype=ref $opt->{$hashopt}) {
-                        if ($reftype eq 'ARRAY') {
-                           $OPT{$tag}=$opt->{$hashopt};
-                        } else {
-                           carp "$pkgname: invalid reference type for $hashopt option";
-                           return 0;
-                        }
-                     } elsif ( $tag eq 'source' or $tag eq 'src') {
-                        $OPT{$tag}=$opt->{$hashopt};
-                     } else {
-                        carp "$pkgname: $hashopt is not a reference";
-                        return 0;
-                     }
-                  } elsif ($hashopt eq 'dest' or
-                        $hashopt eq 'destination' or
-                        $hashopt eq 'dst') {
-                      $OPT{'dest'}=$opt->{$hashopt};
-
-                  } elsif ($hashopt eq 'path-to-rsync') {
-                     $OPT{$hashopt}=$opt->{$hashopt};
-                  } else {
-                     carp "$pkgname: $hashopt - unknown option";
-                     return 0;
-                  }
-               }
-            }
-         } else {
+         unless ($reftype eq 'HASH') {
             carp "$pkgname: invalid reference type ($reftype) in options";
             return 0;
          }
       } else {
-         print STDERR "processing option: $opt\n"
-            if $OPT{'debug'} or $self->{'debug'};
-         if ($opt=~/^-/) {
-            # handle short opts first
-            if ($opt=~/^-(\w+)$/) {
-               foreach my $char (split '',$1) {
-                  print STDERR "short option: -$char\n" if $self->{'debug'};
-                  if (exists $short{$char}) {
-                     # get the long form
-                     foreach my $lop (split /:/,$short{$char}) {
-                        # handle the 3 short opts that require args
-                        if ($char=~/^[BeT]$/) {
-                           $OPT{$lop}=shift @opts;
-                        } else {
-                           # handle the rest
-                           $OPT{$lop}=1;
-                        }
-                     }
-                     next;
-                  }
-                  carp "$pkgname: -$char - unknown option";
+         carp "$pkgname: invalid option ($opt)";
+         return 0;
+      }
+   } elsif (@opts % 2) {
+      carp "$pkgname: invalid number of options passed (must be key/value pairs)";
+      return 0;
+   } else {
+      $opt={@opts};
+   }
+
+   # now process the options given, we handle debug first since hashes do not
+   # have a specific order, and it would not be set first even if we sorted
+   if (exists $opt->{'debug'}) {
+      $OPT{'debug'}=$opt->{'debug'};
+      print(STDERR "setting debug flag\n") if $OPT{'debug'};
+   }
+   foreach my $hashopt (keys %$opt) {
+      next if $hashopt eq 'debug'; # we did this one first (above)
+      print STDERR "processing option: $hashopt\n"
+         if $OPT{'debug'} or $self->{'debug'};
+      if (exists $self->{'flag'}{$hashopt} or
+            exists $self->{'scalar'}{$hashopt} or
+            exists $self->{'counter'}{$hashopt}) {
+         $OPT{$hashopt}=$opt->{$hashopt};
+      } else {
+         my $tag='';
+         if ($hashopt eq 'exclude' or $hashopt eq 'include') {
+            $tag=$hashopt;
+         } elsif ($hashopt eq 'source' or
+               $hashopt eq 'src') {
+            $tag='source';
+         }
+         if ($tag) {
+            if (my $reftype=ref $opt->{$hashopt}) {
+               if ($reftype eq 'ARRAY') {
+                  $OPT{$tag}=$opt->{$hashopt};
+               } else {
+                  carp "$pkgname: invalid reference type for $hashopt option";
                   return 0;
                }
-               next;
-            }
-            # handle long opts with = args
-            # this is largely a repeat of the code above for hashes with minor
-            # changes, I haven't figured out a better way to handle this yet
-            if ($opt=~/^--(\w+[\w-]*)=(.*)$/) {
-               print STDERR "splitting longopt: $opt ($1 $2)\n" if $self->{'debug'};
-               ($opt,$arg)=($1,$2);
-            }
-            # handle boolean flags
-            $OPT{$opt}=1,next
-               if exists $self->{'flag'}{$opt};
-            # handle simple scalars
-            $OPT{$opt}=($arg || shift @opts),next
-               if exists $self->{'scalar'}{$opt};
-            # handle counters
-            $OPT{$opt}++,next
-               if exists $self->{'counter'}{$opt};
-            my $val=$arg || shift @opts;
-            if ($opt eq 'exclude') {
-               if (my $reftype=ref $val) {
-                  # if they pass in an array reference we take it as-is and
-                  # hope it is built correctly (you can only have an include or
-                  # an exclude, not both), you can clear an include or exclude
-                  # by passing a reference to an emtpy array
-                  if ($reftype eq 'ARRAY') {
-                     $OPT{'exclude'}=$val;
-                  } else {
-                     carp "$pkgname: invalid reference for 'exclude' option";
-                     return 0;
-                  }
-               } elsif ($val eq '!') {
-                  # they sent a reset, we will too
-                  $OPT{'exclude'}=[];
-               } else {
-                  # otherwise add it to the list
-                  push @{$OPT{'appendex'}},$val;
-               }
-            } elsif ($opt eq 'include') {
-               if (my $reftype=ref $val) {
-                  # see array reference comments under 'exclude' above
-                  if ($reftype eq 'ARRAY') {
-                     $OPT{'include'}=$val;
-                  } else {
-                     carp "$pkgname: invalid reference for 'include' option";
-                     return 0;
-                  }
-               } elsif ($val eq '!') {
-                  # they sent a reset, we will too
-                  $OPT{'exclude'}=[];
-               } elsif ($val=~ s/^- //) {
-                  # to preserve order we store both includes and excludes in
-                  # the same array.  We use the leading '+ ' (plus space) trick
-                  # from the man page to accomplish this.
-                  push @{$OPT{'appendex'}},$val;
-               } else {
-                  # if it really is an include, fix it first, since we use
-                  # exclude instead
-                  $val='+ '.$val unless $val=~/^\+ /;
-                  push @{$OPT{'appendex'}},$val;
-               }
-            } elsif ($opt eq 'path-to-rsync') {
-               $OPT{$opt}=$val;
+            } elsif ( $tag eq 'source' or $tag eq 'src') {
+               $OPT{$tag}=$opt->{$hashopt};
             } else {
-               carp "$pkgname: unknown option: $opt";
+               carp "$pkgname: $hashopt is not a reference";
                return 0;
             }
-         } else { # must be data (source/destination info)
-            push @{$OPT{'data'}},$opt;
+         } elsif ($hashopt eq 'dest' or
+               $hashopt eq 'destination' or
+               $hashopt eq 'dst') {
+               $OPT{'dest'}=$opt->{$hashopt};
+
+         } elsif ($hashopt eq 'path-to-rsync' or
+               $hashopt eq 'srchost') {
+            $OPT{$hashopt}=$opt->{$hashopt};
+         } else {
+            carp "$pkgname: $hashopt - unknown option";
+            return 0;
          }
       }
    }
@@ -390,12 +286,8 @@ sub _saveopts {
          $self->{'counter'}{$opt}=$opts->{$opt};
       } elsif ($opt eq 'exclude' or $opt eq 'include' or
             $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug' or
-            $opt eq 'path-to-rsync') {
+            $opt eq 'path-to-rsync' or $opt eq 'srchost') {
          $self->{$opt}=$opts->{$opt};
-      } elsif ($opt eq 'data') {
-         push @{$self->{$opt}},@{$opts->{$opt}};
-      } elsif ($opt eq 'appendex') {
-         push @{$self->{'exclude'}},@{$opts->{$opt}};
       } else {
          carp "$pkgname: unknown option: $opt";
          return 0;
@@ -421,17 +313,10 @@ $obj->exec(\%options) or warn "rsync failed\n";
 This is the method that does the real work.  Any options passed to this
 routine are appended to any pre-set options and are not saved.  They effect
 the current execution of I<rsync> only.  In the case of conflicts, the options
-passed directly to I<exec> take precedence, and as with I<defopts> above,
-perl-style options take precedence over I<rsync> command-line style.
-It returns B<1> if the return status was zero (or true), if the I<rsync> return
-status was non-zero it returns B<0> and stores the return status.  Note that
-you may consider some situations to be errors that I<rsync> does not.  For
-instance, if the source path does not exist rsync still returns a zero status
-(and the I<exec> method will return B<1>) because the sending and receiving
-processes successfully made a connection that transfered no data.  It is always
-a good idea to at least check the stderr output for messages (like 'no such
-file or directory').  You can examine the return status from I<rsync> and any
-output to stdout and stderr with the methods listed below.
+passed directly to I<exec> take precedence.  It returns B<1> if the return
+status was zero (or true), if the I<rsync> return status was non-zero it
+returns B<0> and stores the return status.  You can examine the return status
+from I<rsync> and any output to stdout and stderr with the methods listed below.
 
 =back
 
@@ -455,7 +340,8 @@ sub exec {
             $runopts{$type}{$opt}=$self->{$type}{$opt};
          }
       }
-      foreach my $opt (qw(path-to-rsync exclude include source debug dest data)) {
+      foreach my $opt (qw(path-to-rsync exclude include
+            source srchost debug dest)) {
          $runopts{$opt}=$self->{$opt};
       }
       # now allow any args passed directly to exec to override
@@ -468,12 +354,8 @@ sub exec {
             $runopts{'counter'}{$opt}=$execopts->{$opt};
          } elsif ($opt eq 'exclude' or $opt eq 'include' or
                $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug' or
-               $opt eq 'path-to-rsync') {
+               $opt eq 'path-to-rsync' or $opt eq 'srchost') {
             $runopts{$opt}=$execopts->{$opt};
-         } elsif ($opt eq 'data') {
-            push @{$runopts{$opt}},@{$execopts->{$opt}};
-         } elsif ($opt eq 'appendex') {
-            push @{$runopts{'exclude'}},@{$execopts->{$opt}};
          } else {
             carp "$pkgname: unknown option: $opt";
             return 0;
@@ -510,9 +392,17 @@ sub exec {
    if ($merged->{'source'} or $merged->{'dest'}) {
       if ($merged->{'source'}) {
          if (ref $merged->{'source'}) {
-            push @cmd,@{$merged->{'source'}};
+            if ($merged->{'srchost'}) {
+               push @cmd,$merged->{'srchost'}.':'.join ' ',@{$merged->{'source'}};
+            } else {
+               push @cmd,@{$merged->{'source'}};
+            }
          } else {
-            push @cmd,$merged->{'source'};
+            if ($merged->{'srchost'}) {
+               push @cmd,$merged->{'srchost'}.':'.$merged->{'source'};
+            } else {
+               push @cmd,$merged->{'source'};
+            }
          }
       } else {
          carp "$pkgname: option 'dest' specified without 'source' option";
@@ -523,10 +413,6 @@ sub exec {
       } else {
          carp "$pkgname: option 'source' specified without 'dest' option";
          return 0;
-      }
-   } elsif (@{$merged->{'data'}}) {
-      foreach my $opt (@{$merged->{'data'}}) {
-         push @cmd,$opt;
       }
    } else {
       carp "$pkgname: no source or destination specified";
