@@ -1,8 +1,24 @@
+Thu Mar 14 23:19:35 CST 2002 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.22: added options for rsync 2.5.4, no-blocking-io, no-detach,
+      and no-whole-file.
+
+Thu Dec 20 13:52:33 CST 2001 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.21: added rsync+ options from 2.4.7pre4/2.5.0, read-batch
+      and write-batch.
+
+      Thanks to Jonathan Pelletier <jonathan.pelletier@matrox.com> for
+      catching (and supply a fix for) an output message loss.  This version
+      contains a variation on his patch.  Jonathan also suggested the new
+      method 'lastcmd' to return the last 'rsync' command passed to the system
+      for devugging and error messages.
+
 Fri Sep  7 15:18:58 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.20: made changes to test.pl so failed tests would
       return non-zero exit and actually fail the tests.  Also corrected
-      several type-os in the POD documentation (thanks to Joe SMith
+      several type-os in the POD documentation (thanks to Joe Smith
       <Joe.Smith@wcom.com> for pointing them out).
 
 Wed May 16 21:11:31 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>

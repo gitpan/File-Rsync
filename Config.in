@@ -1,4 +1,5 @@
-#!/usr/local/bin/perl
+# -*- perl -*-
+# vim:ft=perl foldlevel=1
 package File::Rsync::Config;
 
 require Exporter;

@@ -1,4 +1,5 @@
-#!/usr/local/bin/perl
+# -*- perl -*-
+# vim:ft=perl foldlevel=1
 #      __
 #     /\ \ From the mind of
 #    /  \ \
@@ -22,7 +23,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.20 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.22 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -111,28 +112,29 @@ sub new {
       # these are the boolean flags to rsync, all default off, including them
       # in the args list turns them on
       'flag' => {qw(
-         archive           0   dry-run           0   perms             0
-         backup            0   existing          0   progress          0
-         blocking-io       0   force             0   recursive         0
-         checksum          0   group             0   relative          0
-         compress          0   hard-links        0   safe-links        0
-         copy-links        0   help              0   size-only         0
-         copy-unsafe-links 0   ignore-errors     0   sparse            0
-         cvs-exclude       0   ignore-times      0   stats             0
-         daemon            0   links             0   times             0
-         delete            0   numeric-ids       0   update            0
-         delete-after      0   one-file-system   0   version           0
-         delete-excluded   0   owner             0   whole-file        0
-         devices           0   partial           0
+         archive           0   existing          0   partial           0
+         backup            0   force             0   perms             0
+         blocking-io       0   group             0   progress          0
+         checksum          0   hard-links        0   recursive         0
+         compress          0   help              0   relative          0
+         copy-links        0   ignore-errors     0   safe-links        0
+         copy-unsafe-links 0   ignore-times      0   size-only         0
+         cvs-exclude       0   links             0   sparse            0
+         daemon            0   no-blocking-io    0   stats             0
+         delete            0   no-detach         0   times             0
+         delete-after      0   no-whole-file     0   update            0
+         delete-excluded   0   numeric-ids       0   version           0
+         devices           0   one-file-system   0   whole-file        0
+         dry-run           0   owner             0   write-batch       0
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
-         address         0   exclude-from    0   rsh             0
-         backup-dir      0   include-from    0   rsync-path      0
-         block-size      0   log-format      0   suffix          0
-         bwlimit         0   max-delete      0   temp-dir        0
-         compare-dest    0   modify-window   0   timeout         0
-         config          0   password-file   0
+         address         0   exclude-from    0   read-batch      0
+         backup-dir      0   include-from    0   rsh             0
+         block-size      0   log-format      0   rsync-path      0
+         bwlimit         0   max-delete      0   suffix          0
+         compare-dest    0   modify-window   0   temp-dir        0
+         config          0   password-file   0   timeout         0
          csum-length     0   port            0
       )},
       # these are not flags but counters, each time they appear it raises the
@@ -151,6 +153,8 @@ sub new {
       # return status from last exec
       'status'      => 0,
       'realstatus'  => 0,
+      # last rsync command-line executed
+      'lastcmd'     => undef,
       # whether or not to print debug statements
       'debug'       => 0,
       # stderr from last exec in array format (messages from remote rsync proc)
@@ -172,10 +176,6 @@ sub new {
 =over 4
 
 =item File::Rsync::defopts
-
-I<defopts> $obj @options;
-
-   or
 
 $obj->defopts(@options);
 
@@ -322,10 +322,6 @@ sub _saveopts {
 
 =item File::Rsync::exec
 
-I<exec> $obj @options or warn "rsync failed\n";
-
-   or
-
 $obj->exec(@options) or warn "rsync failed\n";
 
    or
@@ -454,6 +450,7 @@ sub exec {
    my $in=FileHandle->new; my $out=FileHandle->new; my $err=FileHandle->new;
    $err->autoflush(1);
    my $pid=eval{ open3 $in,$out,$err,@cmd };
+   $self->{lastcmd} = \@cmd;
    if ($@) {
       $self->{'realstatus'}=0;
       $self->{'status'}=255;
@@ -468,11 +465,9 @@ sub exec {
       $rmask|=$tmask;
    }
    my $odata= my $edata='';
-   my $done=0;
    my $opart;
    my $epart;
-   while (not $done) {
-      $done++ if (waitpid $pid,&WNOHANG);
+   while (1) {
       my $nfound=select(my $rout=$rmask,undef,undef,1);
       next unless $nfound;
       my @bits=split(//,unpack('b*',$rout));
@@ -508,7 +503,7 @@ sub exec {
    $self->{'err'}=$edata ? [ split /^/m,$edata ] : '';
    $out->close;
    $err->close;
-   waitpid $pid,0 unless $done;
+   waitpid $pid,0;
    $self->{'realstatus'}=$?;
    $self->{'status'}=$?>>8;
    return($self->{'status'} ? 0 : 1);
@@ -517,10 +512,6 @@ sub exec {
 =over 4
 
 =item File::Rsync::list
-
-$out = I<list> $obj @options;
-
-   or
 
 $out = $obj->list(@options);
 
@@ -558,10 +549,6 @@ sub list {
 
 =item File::Rsync::status
 
-$rval = I<status> $obj;
-
-   or
-
 $rval = $obj->I<status>;
 
 Returns the status from last I<exec> call right shifted 8 bits.
@@ -579,10 +566,6 @@ sub status {
 
 =item File::Rsync::realstatus
 
-$rval = I<realstatus> $obj;
-
-   or
-
 $rval = $obj->I<realstatus>;
 
 Returns the real status from last I<exec> call (not right shifted).
@@ -599,10 +582,6 @@ sub realstatus {
 =over 4
 
 =item File::Rsync::err
-
-$aref = I<err> $obj;
-
-   or
 
 $aref = $obj->I<err>;
 
@@ -631,10 +610,6 @@ sub err {
 
 =item File::Rsync::out
 
-$aref = I<out> $obj;
-
-   or
-
 $aref = $obj->I<out>;
 
 Similar to the I<err> method, in a scalar context it returns a reference to an
@@ -656,11 +631,53 @@ sub out {
    }
 }
 
+=over 4
+
+=item File::Rsync::lastcmd
+
+$aref = $obj->I<lastcmd>;
+
+Returns the actual system command used by the last I<exec> call, or '' before
+any calls to I<exec> for the object.  This can be useful in the case of an
+error condition to give a more informative message or for debugging purposes.
+In an array context it return an array of args as passed to the system, in
+a scalar context it returns a space-seperated string.
+
+=back
+
+=cut
+
+sub lastcmd {
+   my $self=shift;
+   if ($self->{lastcmd}) {
+      return wantarray ? @{$self->{lastcmd}} : join ' ',@{$self->{lastcmd}};
+   } else {
+      return(wantarray ? () : '');
+   }
+}
+
 =head1 Author
 
 Lee Eakin E<lt>leakin@nostrum.comE<gt>
 
 =head1 Credits
+
+The following people have contributed ideas, bug fixes, and code to improve
+this module since it's release.  See the Changelog for details:
+
+Greg Ward
+
+Boris Goldowsky
+
+James Mello
+
+Andreas Koenig
+
+Joe Smith
+
+Jonathan Pelletier
+
+=head1 Inspiration and Assistance
 
 Gerard Hickey                             C<PGP::Pipe>
 
