@@ -1,3 +1,11 @@
+Sat Sep 16 23:32:59 CDT 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.13: addes suport for new flags blocking-io and ignore-errors,
+      as well as scalars bwlimit, max-delete, and modify-window.  I also
+      rearranged the options hashes into a vertical sort similar to 'ls'.
+      This makes additions a bit more difficult, but makes reading and
+      verifying the options much easier (at least for me).
+
 Tue Feb 29 17:41:14 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.12: pervious version fixed blocking, but was not clean
