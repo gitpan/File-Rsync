@@ -1,6 +1,20 @@
+Mon Jun  9 17:39:42 CDT 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.29: Paul Egan had another suggestion I liked very much.
+      I switched to using IO::Select rather than calling select directly.
+      I've always hated the ugly vec code that must be added in order to
+      use select.  It clutters the program with lots of unrelated but
+      essential cruft.  The module keeps all that separate from what is
+      going on in the rsync wrapper.  Paul was still seeing a hang in certain
+      cases, and Ronald J Kimball <rjk@linguist.thayer.dartmouth.edu> was
+      having similar problems.  Both were seeing a hang on the eof tests,
+      so I removed them (eof does not play well with sysread, but we need
+      sysread to make sure we don't block).  I have not been able to make it
+      hang (at least not yet).
+
 Thu May 29 21:33:07 CDT 2003 Lee Eakin  <leakin@dfw.nostrum.com>
 
-      * version 0.28: Paul Egan <paulegan@yahoo.com> found one of the
+      * version 0.28: Paul Egan <paulegan@mail.com> found one of the
       cases where the module could block, and provided a patch to fix it.
       The cost is a going thru select again after each block is read, but
       he was able to prove it stops the hang.  Paul also suggested an

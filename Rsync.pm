@@ -16,6 +16,7 @@ require 5.004; # it might work with older versions of 5 but not tested
 
 use FileHandle;
 use IPC::Open3 qw(open3);
+use IO::Select;
 use POSIX ":sys_wait_h";
 use Carp 'carp';
 use File::Rsync::Config;
@@ -23,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.28 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION='0.30';
 
 =head1 NAME
 
@@ -457,82 +458,51 @@ sub exec {
       $self->{'err'}=[$@,"Execution of rsync failed.\n"];
       return 0;
    }
-   my $rmask='';
-   foreach my $fh ($err,$out) {
-      my $tmask='';
-      vec($tmask,$fh->fileno,1)=1;
-      $rmask|=$tmask;
-   }
-   my $odata = my $edata = my $opart = my $epart = '';
-   my $done;
-   local $SIG{CHLD} = sub { $done++ }; # this works due to closure rules
-   my $oblksz = ($out->stat())[11] || 1024;
-   my $eblksz = ($err->stat())[11] || 1024;
-   while (not $done) {
-      my $nfound=select(my $rout=$rmask,undef,undef,1);
-      next unless $nfound;
-      my @bits=split(//,unpack('b*',$rout));
-      if ($bits[$out->fileno]) {
-         my $data;
-         if (my $c=sysread $out,$data,$oblksz) {
-            if ($merged->{'outfun'}) {
-               my $npart='';
-               $npart=$1 if ($data=~s/([^\n]+)\z//s);
-               foreach my $line (split /^/m,$opart.$data) {
-                  &{$merged->{outfun}}($line,'out');
+   my $odata = my $edata = '';
+
+   my $stream = { 
+     $out->fileno => {
+        name => 'out',
+        data => \$odata,
+        buffer_tail => '',
+        block_size => ($out->stat)[11] || 1024,
+        handler => $merged->{outfun}
+     },         
+     $err->fileno => {
+        name => 'err',
+        data => \$edata,
+        buffer_tail => '',
+        block_size => ($err->stat)[11] || 1024,
+        handler => $merged->{errfun}
+     }
+   };
+
+   my $select = IO::Select->new;
+   $select->add($out,$err);
+
+   while ($out->opened or $err->opened) {
+      foreach my $fd ( $select->can_read(1) ) {
+         my $str = $stream->{$fd->fileno};
+         warn("stream not found") unless $str;
+
+         my $buffer;
+         if ( $fd->sysread($buffer, $str->{block_size}) ) {
+            ${$str->{data}} .= $buffer;
+            if ( $str->{handler} ) {
+               my $tail;
+               $tail = $1 if $buffer =~ s/([^\n]+)\z//s;
+               foreach my $line ( split /^/m, $str->{buffer_tail}.$buffer ) {
+                  &{$str->{handler}}($line, $str->{name});
                }
-               $opart=$npart;
+               $str->{buffer_tail} = $tail;
             }
-            $odata.=$data;
-            last if $out->eof;
+         } else {
+            $select->remove($fd);
+            $fd->close;
          }
-      }
-      if ($bits[$err->fileno]) {
-         my $data;
-         if (my $c=sysread $err,$data,$eblksz) {
-            if ($merged->{'errfun'}) {
-               my $npart='';
-               $npart=$1 if ($data=~s/([^\n]+)\z//s);
-               foreach my $line (split /^/m,$epart.$data) {
-                  &{$merged->{errfun}}($line,'err');
-               }
-               $epart=$npart;
-            }
-            $edata.=$data;
-            last if $err->eof;
-         }
-      }
-      last if $out->eof and $err->eof;
-   }
-   # check them again in case we dropped out early due to sigchild
-   unless ($out->eof) {
-      my $data;
-      while (my $c=sysread $out,$data,$oblksz) {
-         if ($merged->{'outfun'}) {
-            my $npart=$1 if ($data=~s/([^\n]+)\z//s);
-            foreach my $line (split /^/m,$opart.$data) {
-               &{$merged->{outfun}}($line,'out');
-            }
-            $opart=$npart;
-         }
-         $odata.=$data;
-         last if $out->eof;
       }
    }
-   unless ($err->eof) {
-      my $data;
-      while (my $c=sysread $err,$data,$eblksz) {
-         if ($merged->{'errfun'}) {
-            my $npart=$1 if ($data=~s/([^\n]+)\z//s);
-            foreach my $line (split /^/m,$epart.$data) {
-               &{$merged->{errfun}}($line,'err');
-            }
-            $epart=$npart;
-         }
-         $edata.=$data;
-         last if $err->eof;
-      }
-   }
+
    $self->{'out'}=$odata ? [ split /^/m,$odata ] : '';
    $self->{'err'}=$edata ? [ split /^/m,$edata ] : '';
    $out->close;
@@ -696,8 +666,9 @@ Lee Eakin E<lt>leakin@nostrum.comE<gt>
 
 =head1 Credits
 
-The following people have contributed ideas, bug fixes, and code to improve
-this module since it's release.  See the Changelog for details:
+The following people have contributed ideas, bug fixes, code or helped out
+by reporting or tracking down bugs in order to improve this module since
+it's initial release.  See the Changelog for details:
 
 Greg Ward
 
@@ -716,6 +687,8 @@ Heiko Jansen
 Tong Zhu
 
 Paul Egan
+
+Ronald J Kimball
 
 =head1 Inspiration and Assistance
 
