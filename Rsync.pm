@@ -24,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.37';
+$VERSION = '0.38';
 
 =head1 NAME
 
@@ -120,6 +120,24 @@ and B<infun>.  The B<infun> option may also be used with the B<include-from>
 or B<exclude-from> settings, but this is generally more clumsy than using the
 B<include> or B<exclude> arrays.
 
+Version 2.6.3 of I<rsync(1)> provides new options B<partial-dir>,
+B<checksum-seed>, B<keep-dirlinks>, B<inplace>, B<ipv4>, and B<ipv6>.
+Version 2.6.4 of I<rsync(1)> provides new options B<del>, B<delete-before>
+B<delete-during>, B<delay-updates>, B<dirs>, B<filter>, B<fuzzy>,
+B<itemize-changes>, B<list-only>, B<omit-dir-times>, B<remove-sent-files>,
+B<max-size>, and B<protocol>.
+
+Version 0.38 of this module also adds support for the B<acls> option that
+is not part of I<rsync(1)> unless the patch has been applied, but people do
+use it.  It also includes a new B<literal> option that takes an array reference
+similar to B<include>, B<exclude>, and B<filter>.  Any arguments in the array
+are passed as literal arguments to rsync, and are passed first.  They should
+have the proper single or double hyphen prefixes and the elements should be
+split up the way you want them passed to exec.  The purpose of this option
+is to allow the use of arbitrary options added by patches, and/or to allow
+the use of new options in rsync without needing an imediate update to the
+module in addtition to I<rsync(1)> itself.
+
 =back
 
 =cut
@@ -154,19 +172,19 @@ sub new {
          devices           0  no-blocking-io    0  times             0
          dirs              0  no-detach         0  update            0
          dry-run           0  no-implied-dirs   0  version           0
-         existing          0  no-relative       0
+         existing          0  no-relative       0  acls              0
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
          address           0  files-from        0  port              0
-         backup-dir        0  include-from      0  read-batch        0
-         block-size        0  link-dest         0  rsh               0
-         bwlimit           0  log-format        0  rsync-path        0
-         checksum-seed     0  max-delete        0  suffix            0
-         compare-dest      0  max-size          0  temp-dir          0
-         config            0  modify-window     0  timeout           0
-         csum-length       0  partial-dir       0  write-batch       0
-         exclude-from      0  password-file     0
+         backup-dir        0  include-from      0  protocol          0
+         block-size        0  link-dest         0  read-batch        0 
+         bwlimit           0  log-format        0  rsh               0 
+         checksum-seed     0  max-delete        0  rsync-path        0 
+         compare-dest      0  max-size          0  suffix            0 
+         config            0  modify-window     0  temp-dir          0 
+         csum-length       0  partial-dir       0  timeout           0 
+         exclude-from      0  password-file     0  write-batch       0 
       )},
       # these are not flags but counters, each time they appear it raises the
       # count, so we keep track and pass them the same number of times
@@ -176,6 +194,7 @@ sub new {
       'exclude'     => [],
       'include'     => [],
       'filter'      => [],
+      'literal'     => [],
       # hostname of source, used if 'source' is an array reference
       'srchost'     => '',
       # source host and/or path names
@@ -286,7 +305,8 @@ sub _parseopts {
          my $tag = '';
          if (     $hashopt eq 'exclude'
                or $hashopt eq 'include'
-               or $hashopt eq 'filter') {
+               or $hashopt eq 'filter'
+               or $hashopt eq 'literal') {
             $tag = $hashopt;
          } elsif ($hashopt eq 'source'
                or $hashopt eq 'src') {
@@ -351,7 +371,8 @@ sub _saveopts {
             or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
             or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
             or $opt eq 'path-to-rsync' or $opt eq 'srchost'
-            or $opt eq 'quote-dst' or $opt eq 'quote-src') {
+            or $opt eq 'quote-dst' or $opt eq 'quote-src'
+            or $opt eq 'literal') {
          $self->{$opt} = $opts->{$opt};
       } else {
          carp "$pkgname: unknown option: $opt";
@@ -404,7 +425,7 @@ sub getcmd {
          }
       }
       foreach my $opt (qw(path-to-rsync exclude include filter source srchost
-               debug dest outfun errfun infun quote-dst quote-src)) {
+               debug dest outfun errfun infun quote-dst quote-src literal)) {
          $runopts{$opt} = $self->{$opt};
       }
       # now allow any args passed directly to exec to override
@@ -419,7 +440,8 @@ sub getcmd {
                or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
                or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
                or $opt eq 'path-to-rsync' or $opt eq 'srchost'
-               or $opt eq 'quote-dst' or $opt eq 'quote-src') {
+               or $opt eq 'quote-dst' or $opt eq 'quote-src'
+               or $opt eq 'literal') {
             $runopts{$opt} = $execopts->{$opt};
          } else {
             carp "$pkgname: unknown option: $opt";
@@ -431,11 +453,14 @@ sub getcmd {
 
    my @cmd = ($merged->{'path-to-rsync'});
 
+   # put any literal options first
+   push @cmd,@{$merged->{'literal'}} if @{$merged->{'literal'}};
+
    foreach my $opt (sort keys %{$merged->{'flag'}}) {
       push @cmd,"--$opt" if $merged->{'flag'}{$opt};
    }
    foreach my $opt (sort keys %{$merged->{'scalar'}}) {
-      push @cmd,"--$opt=".$merged->{'scalar'}{$opt} if $merged->{'scalar'}{$opt};
+      push @cmd,"--$opt=$merged->{'scalar'}{$opt}" if $merged->{'scalar'}{$opt};
    }
    foreach my $opt (sort keys %{$merged->{'counter'}}) {
       for (my $i = 0;$i<$merged->{'counter'}{$opt};$i++) {
@@ -448,18 +473,18 @@ sub getcmd {
       return;
    }
    foreach my $opt (@{$merged->{'exclude'}}) {
-      push @cmd,'--exclude='.$opt;
+      push @cmd,"--exclude=$opt";
    }
    foreach my $opt (@{$merged->{'include'}}) {
-      push @cmd,'--include='.$opt;
+      push @cmd,"--include=$opt";
    }
    foreach my $opt (@{$merged->{'filter'}}) {
-      push @cmd,'--filter='.$opt;
+      push @cmd,"--filter=$opt";
    }
    if ($merged->{'source'}) {
       if (ref $merged->{'source'}) {
          if ($merged->{'srchost'}) {
-            push @cmd, $merged->{'srchost'}.':'.join ' ',
+            push @cmd, "$merged->{'srchost'}:" . join ' ',
                $merged->{'quote-src'} ? map { "\"$_\"" } @{$merged->{'source'}}
                                       : @{$merged->{'source'}};
          } else {
@@ -469,7 +494,7 @@ sub getcmd {
          }
       } else {
          if ($merged->{'srchost'}) {
-            push @cmd,$merged->{'srchost'}.':'.
+            push @cmd, "$merged->{'srchost'}:" .
                ($merged->{'quote-src'} ? "\"$merged->{'source'}\""
                                        : $merged->{'source'});
          } else {
@@ -479,7 +504,7 @@ sub getcmd {
          }
       }
    } elsif ($merged->{'srchost'} and $list) {
-      push @cmd,$merged->{'srchost'}.':';
+      push @cmd, "$merged->{'srchost'}:";
    } else {
       if ($list) {
          carp "$pkgname: no 'source' specified";
@@ -801,6 +826,8 @@ James CE Johnson
 Bill Uhl
 
 Peter teStrake
+
+Harald Flaucher
 
 =head1 Inspiration and Assistance
 

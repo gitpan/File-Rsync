@@ -1,3 +1,13 @@
+Wed Mar 30 22:06:04 CST 2005 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.38: Harald Flaucher ( Harald dot Flaucher at
+      mondial dot de ) requested support for the --acls option, which
+      is not part of rsync, but an included patch that some use.  His
+      request inspired the idea for the 'literal' option in the module
+      to allow passing arbitrary literal arguments to rsync so other
+      patches or even newer versions of rsync can be used.  Also added
+      support for the protocol option that was previously undocumented.
+
 Sat Mar  5 19:59:01 CST 2005 ( leakin at dfw dot nostrum dot com )
 
       * version 0.37: added support for new options in 2.6.4-pre1:
