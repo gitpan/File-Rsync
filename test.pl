@@ -13,13 +13,13 @@ print "ok 1\n";
 system qw(rm -rf destdir);
 # perl-style, all in one
 {
-   my $rs=File::Rsync->new({archive => 1,
-         src => 'blib', dest => 'destdir'});
+   my $rs=File::Rsync->new(archive => 1,
+         src => 'blib', dest => 'destdir');
    unless ($rs) {
       print "not ";
    } else {
       my $ret=$rs->exec;
-      $ret == 1 && $rs->status == 0 && ! $rs->err || print "not ";
+      ($ret == 1 && $rs->status == 0 && ! $rs->err) || print "not ";
    }
    print "ok 2\n";
 }
@@ -27,12 +27,12 @@ system qw(rm -rf destdir);
 system qw(rm -rf destdir);
 # perl-style, some in new, some in exec
 {
-   my $rs=File::Rsync->new({archive => 1});
+   my $rs=File::Rsync->new(archive => 1);
    unless ($rs) {
       print "not ";
    } else {
-      my $ret=$rs->exec({src => 'blib', dest => 'destdir'});
-      $ret == 1 && $rs->status == 0 && ! $rs->err || print "not ";
+      my $ret=$rs->exec(src => 'blib', dest => 'destdir');
+      ($ret == 1 && $rs->status == 0 && ! $rs->err) || print "not ";
    }
    print "ok 3\n";
 }
@@ -40,13 +40,14 @@ system qw(rm -rf destdir);
 system qw(rm -rf destdir);
 # non-existant source
 {
-   my $rs=File::Rsync->new({archive => 1});
+   my $rs=File::Rsync->new(archive => 1);
    unless ($rs) {
       print "not ";
    } else {
+      no strict;
       my $ret=$rs->exec(src => 'some-non-existant-path-name', dest => 'destdir');
-         @{$rs->err} == 1
-         && ${$rs->err}[0] =~ /:\s+No such file or directory$/
+         (@{$rs->err} == 1
+         && $rs->err->[0] =~ /:\s+No such file or directory$/)
          || print "not ";
    }
    print "ok 4\n";
@@ -55,15 +56,16 @@ system qw(rm -rf destdir);
 system qw(rm -rf destdir);
 # non-existant destination
 {
-   my $rs=File::Rsync->new({archive => 1});
+   my $rs=File::Rsync->new(archive => 1);
    unless ($rs) {
       print "not ";
    } else {
+      no strict;
       my $ret=$rs->exec(src => 'blib', dest => 'destdir/subdir');
-      $ret == 0
+      ($ret == 0
          && $rs->status != 0
          && @{$rs->err} > 0
-         && ${$rs->err}[0] =~/^mkdir\s+\S+\s*:\s+No such file or directory\b/
+         && ${$rs->err}[0] =~/^mkdir\s+\S+\s*:\s+No such file or directory\b/)
          || print "not ";
    }
    print "ok 5\n";
@@ -72,7 +74,7 @@ system qw(rm -rf destdir);
 system qw(rm -rf destdir);
 # invalid option
 {
-   my $rs=File::Rsync->new({archive => 1, badoption => 1});
+   my $rs=File::Rsync->new(archive => 1, badoption => 1);
    $rs && print "not ";
    print "ok 6\n";
 }

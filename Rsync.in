@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/bin/perl
 #      __
 #     /\ \ From the mind of
 #    /  \ \
@@ -21,7 +21,7 @@ use Carp 'carp';
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.11 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.12 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -225,13 +225,15 @@ sub _parseopts {
       print(STDERR "setting debug flag\n") if $OPT{'debug'};
    }
    foreach my $hashopt (keys %$opt) {
+      my $savopt=$hashopt;
+      $savopt=~tr/_/-/;
       next if $hashopt eq 'debug'; # we did this one first (above)
       print STDERR "processing option: $hashopt\n"
          if $OPT{'debug'} or $self->{'debug'};
-      if (exists $self->{'flag'}{$hashopt} or
-            exists $self->{'scalar'}{$hashopt} or
-            exists $self->{'counter'}{$hashopt}) {
-         $OPT{$hashopt}=$opt->{$hashopt};
+      if (exists $self->{'flag'}{$savopt} or
+            exists $self->{'scalar'}{$savopt} or
+            exists $self->{'counter'}{$savopt}) {
+         $OPT{$savopt}=$opt->{$hashopt};
       } else {
          my $tag='';
          if ($hashopt eq 'exclude' or $hashopt eq 'include') {
@@ -248,7 +250,7 @@ sub _parseopts {
                   carp "$pkgname: invalid reference type for $hashopt option";
                   return 0;
                }
-            } elsif ( $tag eq 'source' or $tag eq 'src') {
+            } elsif ( $tag eq 'source') {
                $OPT{$tag}=$opt->{$hashopt};
             } else {
                carp "$pkgname: $hashopt is not a reference";
@@ -261,7 +263,7 @@ sub _parseopts {
 
          } elsif ($hashopt eq 'path-to-rsync' or
                $hashopt eq 'srchost') {
-            $OPT{$hashopt}=$opt->{$hashopt};
+            $OPT{$savopt}=$opt->{$hashopt};
          } else {
             carp "$pkgname: $hashopt - unknown option";
             return 0;
@@ -327,7 +329,6 @@ sub exec {
    my $self=shift;
    my $pkgname=ref $self;
    my $merged=0;
-   my $done;
    if (@_) { # If args are passed to exec then we have to merge the saved
       # (default) options with those passed, for any conflicts those passed
       # directly to exec take precidence, and perl-style options take
@@ -430,37 +431,37 @@ sub exec {
       $self->{'err'}=[$@,"Execution of rsync failed.\n"];
       return 0;
    }
-   # the following code (sigchld trap and select stuff) is ugly, but we have to
-   # be very carefull not to block, so this is the best way I know
-   $SIG{CHLD}=sub { my $chld=waitpid($pid,&WNOHANG);$done++ if $pid == $chld};
    $in->close; # we don't use it and neither should rsync (at least not yet)
-   my ($stdo,$stde);
-   vec($stdo,$out->fileno,1)=1;
-   vec($stde,$err->fileno,1)=1;
-   my $iput=$stdo|$stde;
-   my ($datao,$datae);
+   my $rmask='';
+   foreach my $fh ($err,$out) {
+      my $tmask='';
+      vec($tmask,$fh->fileno,1)=1;
+      $rmask|=$tmask;
+   }
+   my $odata= my $edata='';
+   my $done=0;
    while (not $done) {
-      select my $oput=$iput,undef,undef,1;
-      if (vec $oput,$out->fileno,1) {
+      $done++ if (waitpid $pid,&WNOHANG);
+      my $nfound=select(my $rout=$rmask,undef,undef,1);
+      next unless $nfound;
+      my @bits=split(//,unpack('b*',$rout));
+      if ($bits[$out->fileno]) {
          my $data;
          my $c=sysread $out,$data,1024;
-         next unless $c;
-         $datao.=$data;
+         $odata.=$data if $c;
       }
-      if (vec $oput,$err->fileno,1) {
+      if ($bits[$err->fileno]) {
          my $data;
          my $c=sysread $err,$data,1024;
-         next unless $c;
-         $datae.=$data;
+         $edata.=$data if $c;
       }
+      last if $out->eof and $err->eof;
    }
-   $self->{'out'}=[ split /$/m,$datao ];
-   $self->{'err'}=[ split /$/m,$datae ];
+   $self->{'out'}=$odata ? [ split /^/m,$odata ] : '';
+   $self->{'err'}=$edata ? [ split /^/m,$edata ] : '';
    $out->close;
    $err->close;
-   waitpid $pid,0;
-   $self->{'err'}=0 unless @{$self->{'err'}};
-   $self->{'out'}=0 unless @{$self->{'out'}};
+   waitpid $pid,0 unless $done;
    $self->{'realstatus'}=$?;
    $self->{'status'}=$?>>8;
    return($self->{'status'} ? 0 : 1);

@@ -27,6 +27,10 @@ probably familiar with perl, and the hash-style provides more flexibility, I
 feel this makes the most sense.  It also allows me to simplify my code, and
 that means (theoretically at least) less chance for bugs.
 
+I fixed a blocking problem.  It now uses select to avoid hanging.  Underscore
+is now equivalent to hyphen in option keys like Tk, so implicit quoting of the
+left side of => will work.
+
 QUICK START GUIDE:
 
    Install rsync if you haven't already.
