@@ -1,3 +1,8 @@
+Tue Jan 18 17:05:00 CST 2005 ( leakin at dfw dot nostrum dot com )
+
+		* versioon 0.36: fix for "uninitialized value" warning submitted
+		thru rt.cpan.org.  Thanks go to the anonymous Debian user (HTH).
+
 Wed Dec  8 18:33:45 CST 2004 ( leakin at dfw dot nostrum dot com )
 
 		* version 0.35: test 4 was failing due to bad pattern match in the

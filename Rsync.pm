@@ -24,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.35';
+$VERSION = '0.36';
 
 =head1 NAME
 
@@ -548,7 +548,7 @@ sub exec {
          if ( $fd->sysread($buffer, $str->{block_size}) ) {
             ${$str->{data}} .= $buffer;
             if ( $str->{handler} ) {
-               my $tail;
+               my $tail = '';
                $tail = $1 if $buffer =~ s/([^\n]+)\z//s;
                foreach my $line ( split /^/m, $str->{buffer_tail}.$buffer ) {
                   &{$str->{handler}}($line, $str->{name});
@@ -782,7 +782,7 @@ language.
 
 =head1 Copyrights
 
-      Copyright (c) 1999 Lee Eakin.  All rights reserved.
+      Copyright (c) 1999-2005 Lee Eakin.  All rights reserved.
  
       This program is free software; you can redistribute it and/or modify
       it under the same terms as Perl itself. 
