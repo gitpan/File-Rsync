@@ -24,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.32';
+$VERSION = '0.33';
 
 =head1 NAME
 
@@ -410,7 +410,7 @@ sub exec {
                or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
                or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
                or $opt eq 'path-to-rsync' or $opt eq 'srchost'
-               or $opt eq 'quoate-dst' or $opt eq 'quote-src') {
+               or $opt eq 'quote-dst' or $opt eq 'quote-src') {
             $runopts{$opt} = $execopts->{$opt};
          } else {
             carp "$pkgname: unknown option: $opt";
@@ -495,6 +495,7 @@ sub exec {
    my $out = FileHandle->new; my $err = FileHandle->new;
    $err->autoflush(1);
    $out->autoflush(1);
+   local $SIG{CHLD}='DEFAULT';
    my $pid;
    {
       my $in = FileHandle->new;
@@ -748,6 +749,8 @@ Ronald J Kimball
 James CE Johnson
 
 Bill Uhl
+
+Peter teStrake
 
 =head1 Inspiration and Assistance
 

@@ -8,6 +8,10 @@ Copyright (C) 2000-2004 Lee Eakin.  All rights reserved.
 
 Updated to support new options on rsync 2.6.0 (especially --files-from).
 
+If you are using an older version than rsync 2.6.2, please check out the
+latest version.  There have been several fixes and significant speed
+improvements.
+
 ***************************** BUG ALERT *************************************
 *                                                                           *
 *   versions 0.27 - 0.30 passed STDIN to the rsync command to support some  *

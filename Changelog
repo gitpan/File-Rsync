@@ -1,3 +1,13 @@
+Tue Jun  1 12:59:36 CDT 2004 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.33: Fixed a type-o in parsing of quote-dst tag.
+		Peter teStrake (peter dot testrake at tradingscreen dot com)
+		pointed out that the exec method did not protect itself from a
+		user-defined SIGCHLD handler and could miss the exit of rsync and
+		report a false error.  A local reset of the handler should protect
+		it and still leave the handler in place for the rest of the user
+		code.
+
 Sun Dec 21 03:18:26 CST 2003 ( leakin at dfw dot nostrum dot com )
 
       * version 0.32: Added support for new option in 2.6.0: --from0,
