@@ -1,3 +1,11 @@
+Tue Jan  7 13:46:56 CST 2003 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.25: Tong Zhu <tongzhu@thereinc.com> found an error
+      where use of errfun and/or outfun exposed possible use of uninitialized
+      variables (those used to break output into individual lines).
+      Thanks for pointing out my error, and the useful 'diff' output making
+      my coding error easy to track down and fix.
+
 Wed Dec 11 17:57:25 CST 2002 Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.24: Heiko Jansen <heiko_jansen@web.de> found an error

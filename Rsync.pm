@@ -23,7 +23,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.24 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.25 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -464,9 +464,7 @@ sub exec {
       vec($tmask,$fh->fileno,1)=1;
       $rmask|=$tmask;
    }
-   my $odata= my $edata='';
-   my $opart;
-   my $epart;
+   my $odata = my $edata = my $opart = my $epart = '';
    my $done;
    local $SIG{CHLD} = sub { $done++ }; # this works due to closure rules
    while (not $done) {
@@ -477,7 +475,8 @@ sub exec {
          my $data;
          while (my $c=sysread $out,$data,1024) {
             if ($merged->{'outfun'}) {
-               my $npart=$1 if ($data=~s/([^\n]+)\z//s);
+               my $npart='';
+               $npart=$1 if ($data=~s/([^\n]+)\z//s);
                foreach my $line (split /^/m,$opart.$data) {
                   &{$merged->{outfun}}($line,'out');
                }
@@ -491,7 +490,8 @@ sub exec {
          my $data;
          while (my $c=sysread $err,$data,1024) {
             if ($merged->{'errfun'}) {
-               my $npart=$1 if ($data=~s/([^\n]+)\z//s);
+               my $npart='';
+               $npart=$1 if ($data=~s/([^\n]+)\z//s);
                foreach my $line (split /^/m,$epart.$data) {
                   &{$merged->{errfun}}($line,'err');
                }

@@ -18,10 +18,10 @@ for the suggestion.
 James Mello pointed out that if no destination is given, rsync prints a list
 of files that would be processed.  To that end, a list function has been added.
 
-Since I have gotten various reports (and some good improvements) from people
-using this module, and no real problems, I will be bumping the version number
-to 1.0 soon unless someone finds problems.  As always, suggestions for
-improvement are always greatly appreciated.
+Several more bugs have been found and squashed.  The full list of credits
+to everyone who has contributed improvements and fixes can be found in the
+changelog file.  There have been many helpful people making this a much better
+module than I could ever write on my own.
 
 Thanks to Andreas Keonig for explaining how to get this into the by-module
 listing properly, and helping me avoid possible problems by utilizing the
