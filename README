@@ -1,35 +1,29 @@
 File-Rsync - A wrapper module for rsync(1) http://rsync.samba.org/rsync/
 
 *******************************************************************************
-This is a development release to obtain feedback.
-*******************************************************************************
-
 Copyright (c) 2000 Lee Eakin.  All rights reserved.
    This program is free software; you can redistribute it and/or modify
    it under the same terms as Perl itself.
+*******************************************************************************
 
 Perl-style options may be passed as a hash reference.  Thanks to Greg Ward
 for the suggestion.  There is a limited test suite as well.
 
-I've been using version 0.01 in a production environment for 10 months now.
+You may now specify your own output functions.  Your custom function is called
+for each line of output.  The line is the first argument to the function.  The
+second argument is either 'err' or 'out' so the same function may be used for
+both and can determine where the line came from.  Thanks to Boris Goldowsky
+for the suggestion.
 
-However, I'm the only one who has written code to use it.  The author often
-does not exercise his code the way others would, having intimate knowledge of
-not only the code, but the intent behind the code can limit how much the error
-checking is exercised.
+James Mello pointed out that if no destination is given, rsync prints a list
+of files that would be processed.  To that end, a list function has been added.
 
-It is to that end (feedback), and the hope that it will be useful to others
-that I make this release.  Please direct any feedback to leakin@dfw.nostrum.com.
+Since I have gotten various reports (and some good improvements) from people
+using this module, and no real problems, I will be bumping the version number
+to 1.0 soon unless someone finds problems.  As always, suggestions for
+improvement are always greatly appreciated.
 
-I have dropped the rsync command-line style options in favor of the perl-style
-hash.  No one expressed interest in them.  Since anyone using this module is
-probably familiar with perl, and the hash-style provides more flexibility, I
-feel this makes the most sense.  It also allows me to simplify my code, and
-that means (theoretically at least) less chance for bugs.
-
-I fixed a blocking problem.  It now uses select to avoid hanging.  Underscore
-is now equivalent to hyphen in option keys like Tk, so implicit quoting of the
-left side of => will work.
+See the Changelog for details of all changes.
 
 QUICK START GUIDE:
 

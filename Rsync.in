@@ -21,7 +21,7 @@ use Carp 'carp';
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.13 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.17 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -70,26 +70,31 @@ B<path-to-rsync> also exists which can be used to override the hardcoded
 default of
 # @@ F<RSYNC_PATH> (this is actually defined when the module is built),
 and B<debug> which causes the module methods to print some debugging
-information to STDERR.  Options may also be passed as a reference to a hash.
-The B<exclude> option needs an array reference as its value, since there cannot
-be duplicate keys in a hash.  There is an equivalent B<include> option.  Only
-an B<exclude> or B<include> option should be used, not both.  Use the '+ ' or
-'- ' prefix trick to put includes in an B<exclude> array, or to put excludes in
-an B<include> array (see L<rsync> for details).  Include/exclude options from
-an ordered list.  The order must be retained for proper execution.  There are
-also B<source> and B<dest> keys.  The key B<src> is also accepted as an
-equivalent to B<source>, and B<dst> or B<destination> may be used as
-equivalents to B<dest>.  The B<source> option may take a scalar or an array
-reference.  If the source is the local system then multiple B<source> paths
-are allowed.  In this case an array reference should be used.  There is also
-a method for passing multiple source paths to a remote system.  This method
-may be triggered in this module by passing the remote hostname to the
-B<srchost> key and passing an array reference to the B<source> key.  If the
-source host is being accessed via an Rsync server, the remote hostname
-should have a single trailing colon on the name.  When rsync is called, the
-B<srchost> value and the values in the B<source> array will be jioned with a
-colon resulting in the double-colon required for server access.  The B<dest>
-key only takes a scalar since I<rsync> only accepts a single destination path.
+information to STDERR.  The B<outfun> and B<errfun> options take a function
+reference.  The function is called once for each line of output from L<rsync>
+with the output line passed in as the first argument, the second arg is either
+'out' or 'err' depending on the source.  This makes it possible to use the same
+function for both and still determine where the output came from.  Options
+may also be passed as a reference to a hash.  The B<exclude> option needs an
+array reference as its value, since there cannot be duplicate keys in a hash.
+There is an equivalent B<include> option.  Only an B<exclude> or B<include>
+option should be used, not both.  Use the '+ ' or '- ' prefix trick to put
+includes in an B<exclude> array, or to put excludes in an B<include> array
+(see L<rsync> for details).  Include/exclude options from an ordered list.
+The order must be retained for proper execution.  There are also B<source> and
+B<dest> keys.  The key B<src> is also accepted as an equivalent to B<source>,
+and B<dst> or B<destination> may be used as equivalents to B<dest>.  The
+B<source> option may take a scalar or an array reference.  If the source is the
+local system then multiple B<source> paths are allowed.  In this case an array
+reference should be used.  There is also a method for passing multiple source
+paths to a remote system.  This method may be triggered in this module by
+passing the remote hostname to the B<srchost> key and passing an array
+reference to the B<source> key.  If the source host is being accessed via an
+Rsync server, the remote hostname should have a single trailing colon on the
+name.  When rsync is called, the B<srchost> value and the values in the
+B<source> array will be joined with a colon resulting in the double-colon
+required for server access.  The B<dest> key only takes a scalar since I<rsync>
+only accepts a single destination path.
 
 =back
 
@@ -150,8 +155,12 @@ sub new {
       'debug'       => 0,
       # stderr from last exec in array format (messages from remote rsync proc)
       'err'         => 0,
+      'errfun'      => undef,
       # stdout from last exec in array format (messages from local rsync proc)
       'out'         => 0,
+      'outfun'      => undef,
+      # this flag changes error checking in 'exec' when called by 'list'
+      'list'        => 0,
    };
    bless $self, $class; # bless it first so defopts can find out the class
    if (@_) {
@@ -266,6 +275,13 @@ sub _parseopts {
          } elsif ($hashopt eq 'path-to-rsync' or
                $hashopt eq 'srchost') {
             $OPT{$savopt}=$opt->{$hashopt};
+         } elsif ($hashopt eq 'outfun' or $hashopt eq 'errfun') {
+            if (ref $opt->{$hashopt} eq 'CODE') {
+               $OPT{$hashopt}=$opt->{$hashopt};
+            } else {
+               carp "$pkgname: $hashopt option is not a function reference";
+               return 0;
+            }
          } else {
             carp "$pkgname: $hashopt - unknown option";
             return 0;
@@ -291,6 +307,7 @@ sub _saveopts {
          $self->{'counter'}{$opt}=$opts->{$opt};
       } elsif ($opt eq 'exclude' or $opt eq 'include' or
             $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug' or
+            $opt eq 'outfun' or $opt eq 'errfun' or
             $opt eq 'path-to-rsync' or $opt eq 'srchost') {
          $self->{$opt}=$opts->{$opt};
       } else {
@@ -331,6 +348,8 @@ sub exec {
    my $self=shift;
    my $pkgname=ref $self;
    my $merged=0;
+   my $list=$self->{list};
+   $self->{list}=0 if $self->{list};
    if (@_) { # If args are passed to exec then we have to merge the saved
       # (default) options with those passed, for any conflicts those passed
       # directly to exec take precidence, and perl-style options take
@@ -346,7 +365,7 @@ sub exec {
          }
       }
       foreach my $opt (qw(path-to-rsync exclude include
-            source srchost debug dest)) {
+            source srchost debug dest outfun errfun)) {
          $runopts{$opt}=$self->{$opt};
       }
       # now allow any args passed directly to exec to override
@@ -359,6 +378,7 @@ sub exec {
             $runopts{'counter'}{$opt}=$execopts->{$opt};
          } elsif ($opt eq 'exclude' or $opt eq 'include' or
                $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug' or
+               $opt eq 'outfun' or $opt eq 'errfun' or
                $opt eq 'path-to-rsync' or $opt eq 'srchost') {
             $runopts{$opt}=$execopts->{$opt};
          } else {
@@ -394,34 +414,41 @@ sub exec {
    foreach my $opt (@{$merged->{'include'}}) {
       push @cmd,'--include='.$opt;
    }
-   if ($merged->{'source'} or $merged->{'dest'}) {
-      if ($merged->{'source'}) {
-         if (ref $merged->{'source'}) {
-            if ($merged->{'srchost'}) {
-               push @cmd,$merged->{'srchost'}.':'.join ' ',@{$merged->{'source'}};
-            } else {
-               push @cmd,@{$merged->{'source'}};
-            }
+   if ($merged->{'source'}) {
+      if (ref $merged->{'source'}) {
+         if ($merged->{'srchost'}) {
+            push @cmd,$merged->{'srchost'}.':'.join ' ',@{$merged->{'source'}};
          } else {
-            if ($merged->{'srchost'}) {
-               push @cmd,$merged->{'srchost'}.':'.$merged->{'source'};
-            } else {
-               push @cmd,$merged->{'source'};
-            }
+            push @cmd,@{$merged->{'source'}};
          }
       } else {
+         if ($merged->{'srchost'}) {
+            push @cmd,$merged->{'srchost'}.':'.$merged->{'source'};
+         } else {
+            push @cmd,$merged->{'source'};
+         }
+      }
+   } elsif ($merged->{'srchost'} and $list) {
+      push @cmd,$merged->{'srchost'}.':';
+   } else {
+      if ($list) {
+         carp "$pkgname: no 'source' specified";
+         return 0;
+      } elsif ($merged->{'dest'}) {
          carp "$pkgname: option 'dest' specified without 'source' option";
          return 0;
+      } else {
+         carp "$pkgname: no source or destination specified";
+         return 0;
       }
+   }
+   unless ($list) {
       if ($merged->{'dest'}) {
          push @cmd,$merged->{'dest'};
       } else {
          carp "$pkgname: option 'source' specified without 'dest' option";
          return 0;
       }
-   } else {
-      carp "$pkgname: no source or destination specified";
-      return 0;
    }
    print STDERR "exec: @cmd\n" if $merged->{'debug'};
    my $in=FileHandle->new; my $out=FileHandle->new; my $err=FileHandle->new;
@@ -442,6 +469,8 @@ sub exec {
    }
    my $odata= my $edata='';
    my $done=0;
+   my $opart;
+   my $epart;
    while (not $done) {
       $done++ if (waitpid $pid,&WNOHANG);
       my $nfound=select(my $rout=$rmask,undef,undef,1);
@@ -449,13 +478,29 @@ sub exec {
       my @bits=split(//,unpack('b*',$rout));
       if ($bits[$out->fileno]) {
          my $data;
-         my $c=sysread $out,$data,1024;
-         $odata.=$data if $c;
+         while (my $c=sysread $out,$data,1024) {
+            if ($self->{'outfun'}) {
+               my $npart=$1 if ($data=~s/([^\n]+)\z//s);
+               foreach my $line (split /^/m,$opart.$data) {
+                  &{$self->{outfun}}($line,'out');
+               }
+               $opart=$npart;
+            }
+            $odata.=$data;
+         }
       }
       if ($bits[$err->fileno]) {
          my $data;
-         my $c=sysread $err,$data,1024;
-         $edata.=$data if $c;
+         while (my $c=sysread $err,$data,1024) {
+            if ($self->{'errfun'}) {
+               my $npart=$1 if ($data=~s/([^\n]+)\z//s);
+               foreach my $line (split /^/m,$epart.$data) {
+                  &{$self->{errfun}}($line,'err');
+               }
+               $epart=$npart;
+            }
+            $edata.=$data;
+         }
       }
       last if $out->eof and $err->eof;
    }
@@ -467,6 +512,46 @@ sub exec {
    $self->{'realstatus'}=$?;
    $self->{'status'}=$?>>8;
    return($self->{'status'} ? 0 : 1);
+}
+
+=over 4
+
+=item File::Rsync::list
+
+$out = I<list> $obj @options;
+
+   or
+
+$out = $obj->list(@options);
+
+   or
+
+$out = $obj->list(%options);
+
+   or
+
+@out = $obj->list(%options);
+
+This is a wrapper for I<exec> called without a destination to get a listing.
+It returns the output of stdout like the I<out> function below.  When
+no destination is given rsync returns the equivalent of 'ls -l' or 'ls -lr'
+modified by any include/exclude parameters you specify.  This is useful
+for manual comparison without actual changes to the destination or for
+comparing against another listing taken at a different point in time.
+
+=back
+
+=cut
+
+sub list {
+   my $self=shift;
+   $self->{list}++;
+   $self->exec(@_);
+   if ($self->{'out'}) {
+      return(wantarray ? @{$self->{'out'}} : $self->{'out'});
+   } else {
+      return(wantarray ? () : $self->{'out'});
+   }
 }
 
 =over 4

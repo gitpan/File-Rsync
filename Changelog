@@ -1,6 +1,51 @@
+Mon May  7 01:07:44 CDT 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.17: I decided it is better for the out and err methods
+      to return any collected output regardless of whther or not an output
+      function has been defined.  This way you can process each line yourself
+      and still print the entire output in bulk if desired.  This also
+      keeps me from having to work out what these methods should return
+      if called when an output function has been defined.
+
+Thu Feb 15 21:25:23 CST 2001  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.16: James Mello <kingjamm@colltech.com> submitted a patch
+      to add a 'list' function, and educated me on the interesting aspect
+      of calling rsync without a destination in order to obtain an 'ls -l'
+      or 'ls -lr' (with -r or -a) style output.  Rather than duplicating
+      the exec function I made modifications to it and built a wrapper
+      to get the list functionality.  This has all kinds of possibilities.
+      Many thanks to James for the great idea and the education on an
+      option I had never explored.
+
+      use File::Rsync;$rs=File::Rsync->new(srchost => 'localhost:');
+      print $rs->list; will list available modules on the local daemon.
+      
+Tue Nov 28 10:22:50 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.15: After more thought and discussion with Boris we decided
+      a second arg of either 'out' or 'err' should be passed to the functions
+      so a single user-defined function could be used and it will be able to
+      determine the source of the text in arg 1.  Simple functions can ignore
+      the second arg.  The examples below would need to change to 'outfun =>
+      sub {print shift}' and 'errfun => sub {print shift}' to keep from
+      printing the source string. (version 0.14 was not released to CPAN)
+
+Fri Nov 17 23:03:00 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.14: Per suggestion from Boris Goldowsky
+      <boris@range.infoplease.com>, added 'outfun' and 'errfun' options.
+      If you supply a function (CODE) reference to these the stderr and stdout
+      from rsync is passed to these functions one output line at a time and
+      is not collected internally for post examination.  Providing a function
+      like 'outfun => sub {print @_}' will cause each line to be printed as
+      they arrive.  A function like 'outfun => sub {print "."}' will simply
+      shows progress dots like cpio's -V option.  Thanks to Boris for the
+      suggestion.  Sorry it took me so long to get it added.
+
 Sat Sep 16 23:32:59 CDT 2000  Lee Eakin  <leakin@dfw.nostrum.com>
 
-      * version 0.13: addes suport for new flags blocking-io and ignore-errors,
+      * version 0.13: added suport for new flags blocking-io and ignore-errors,
       as well as scalars bwlimit, max-delete, and modify-window.  I also
       rearranged the options hashes into a vertical sort similar to 'ls'.
       This makes additions a bit more difficult, but makes reading and
