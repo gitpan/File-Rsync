@@ -1,0 +1,93 @@
+Tue Nov 30 20:46:00 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * removed global $pkgname, now uses 'my $pkgname=ref $self' instead.
+      I also had to bless $self earlier in 'new' so defopts, and parseopts can
+      use 'ref $self' to determine the package name.  It was not too bright
+      to hardcode the package name (vacations can have odd effects on the brain)
+
+      * changed saveopts and parseopts to begin with underscore since they
+      are for internal use only.
+
+Sun Nov 28 19:41:31 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * added $pkgname for 'carp' messages to make it clearer where they came
+      from.
+
+      * added missing check for 'include' in exec method
+
+      * other misc cleanup and clarification of code and documentation
+
+Sun Nov 28 02:47:34 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.05: major re-organization and re-writing of internal
+      functions to add the ability to pass a hash reference for perl-style
+      options handling.  (Thanks to Greg Ward for the suggestion)  This gives
+      increased flexibility including the ability to turn off boolean flags,
+      and to build your own include or exclude list as an array and pass a
+      reference to the array to the module.  The same can be done for source
+      paths.  
+
+      * removed leading double-dashes from the option keys.  It is easier to
+      add them in the parser for command-line style than to remove them for
+      perl-style hashes.
+
+      * changed 'err' and 'out' methods to return an empty string or an empty
+      list if no output was generated.  If there was output they return it as
+      an array or a reference to an array as before.  This should make testing
+      for the existance of output more efficient.  Before you had to call them
+      in a scalar context and dereference the return in order to check.  Now
+      you can use a simple truth test.  Also added a note about conditions
+      where rsync itself can return a true (0) exit but the programmer may
+      consider it an error.  In these situations you need to check stderr for
+      error messages (such as 'no such file or directory').  See 'exec' method
+      in the manpage.
+
+      * removed newlines from carp messages so the 'at <prog> line ##' is on
+      the same line as the rest of the error message (bad habit from die).
+
+      * changed all return values except 'new' to zero instead of undef so
+      -w won't complain about use of un-initialized values.  If anyone has
+      a good reason to put this back (like good/standard coding practices) let
+      me know.
+
+      * added test.pl script for 'make test'.
+
+Sun Nov 21 02:18:56 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.04: added missing 'next' that would cause a parsing
+      error if -P was used.
+
+      * Renamed module to File::Rsync (Thanks to Tim Bunce for the suggestion)
+      It really fits better here than in Net::, but once I thought of it
+      as a network-based program I had a mental block when considering other
+      groups.
+
+Fri Nov 19 13:25:18 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.03: --address should be a scalar, not a flag (the
+      rsync man page is unclear on this).
+
+Wed Nov 17 21:20:16 CST 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.02:
+
+      * wrote first draft of Makefile.PL and makepm.PL to wrap it all up
+      as a real perl module.
+
+      * added new options for rsync 2.3.2 (-P, --delete-after, and
+      --address)
+      -P is short for --partial and --progress. --address is only
+      used in server mode.  I don't know what good these are inside
+      this module, but you should still be able to pass them if you
+      want.
+      --delete-after allows the user to delay any --delete actions
+      until after all other files are synced.  The default is to
+      perform any deletes before in order help insure sufficient disk
+      space is available.  See the rsync (1) man page for more
+      details.
+
+      * remove any chance of clobbering $_ (mostly paranoia I hope)
+
+Tue Jun 15 15:27:20 CDT 1999  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.01: (initial) based on rsync 2.3.1
