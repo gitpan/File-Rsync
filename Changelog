@@ -1,3 +1,10 @@
+Fri Feb 18 17:45:13 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.11: fixed a blocking problem in the exec function
+      If one of the output pipes filled up it hung forever (oops).
+
+Mon Feb  7 14:05:37 CST 2000  Lee Eakin  <leakin@dfw.nostrum.com>
+
       * version 0.10: removed comments about rsync not considering some things
       to be errors.  This appears to be a bug in 2.3.2 on Linux.  It has been
       submitted to the rsync team.  On Solaris rsync properly returns a non-zero

@@ -15,12 +15,13 @@ require 5.004; # it might work with older versions of 5 but not tested
 
 use FileHandle;
 use IPC::Open3 qw(open3);
+use POSIX ":sys_wait_h";
 use Carp 'carp';
 
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.10 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.11 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -326,6 +327,7 @@ sub exec {
    my $self=shift;
    my $pkgname=ref $self;
    my $merged=0;
+   my $done;
    if (@_) { # If args are passed to exec then we have to merge the saved
       # (default) options with those passed, for any conflicts those passed
       # directly to exec take precidence, and perl-style options take
@@ -420,6 +422,7 @@ sub exec {
    }
    print STDERR "exec: @cmd\n" if $merged->{'debug'};
    my $in=FileHandle->new; my $out=FileHandle->new; my $err=FileHandle->new;
+   $err->autoflush(1);
    my $pid=eval{ open3 $in,$out,$err,@cmd };
    if ($@) {
       $self->{'realstatus'}=0;
@@ -427,11 +430,34 @@ sub exec {
       $self->{'err'}=[$@,"Execution of rsync failed.\n"];
       return 0;
    }
+   # the following code (sigchld trap and select stuff) is ugly, but we have to
+   # be very carefull not to block, so this is the best way I know
+   $SIG{CHLD}=sub { my $chld=waitpid($pid,&WNOHANG);$done++ if $pid == $chld};
    $in->close; # we don't use it and neither should rsync (at least not yet)
-   $self->{'err'}=[ $err->getlines ];
-   $self->{'out'}=[ $out->getlines ];
-   $err->close;
+   my ($stdo,$stde);
+   vec($stdo,$out->fileno,1)=1;
+   vec($stde,$err->fileno,1)=1;
+   my $iput=$stdo|$stde;
+   my ($datao,$datae);
+   while (not $done) {
+      select my $oput=$iput,undef,undef,1;
+      if (vec $oput,$out->fileno,1) {
+         my $data;
+         my $c=sysread $out,$data,1024;
+         next unless $c;
+         $datao.=$data;
+      }
+      if (vec $oput,$err->fileno,1) {
+         my $data;
+         my $c=sysread $err,$data,1024;
+         next unless $c;
+         $datae.=$data;
+      }
+   }
+   $self->{'out'}=[ split /$/m,$datao ];
+   $self->{'err'}=[ split /$/m,$datae ];
    $out->close;
+   $err->close;
    waitpid $pid,0;
    $self->{'err'}=0 unless @{$self->{'err'}};
    $self->{'out'}=0 unless @{$self->{'out'}};
