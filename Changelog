@@ -1,3 +1,17 @@
+Wed Dec 11 17:57:25 CST 2002 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.24: Heiko Jansen <heiko_jansen@web.de> found an error
+      in the exec function where I was accessing the errfun and outfun
+      functions from the main object, and ignoring them if they were
+      passed to 'exec'.  Thanks for pointing out the error, hopefully
+      this will work much better for you know.
+
+Wed Dec  4 22:38:14 CST 2002 Lee Eakin  <leakin@dfw.nostrum.com>
+
+      * version 0.23: I got 3 separate reports of hangs, but cannot reproduce
+      the error (yet).  Added a trap and more eof tests to hopefully catch
+      and exit properly.
+
 Thu Mar 14 23:19:35 CST 2002 Lee Eakin  <leakin@dfw.nostrum.com>
 
       * version 0.22: added options for rsync 2.5.4, no-blocking-io, no-detach,

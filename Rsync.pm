@@ -23,7 +23,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION=do {my @r=(q$Revision: 0.22 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
+$VERSION=do {my @r=(q$Revision: 0.24 $=~/\d+/g);sprintf "%d."."%02d"x$#r,@r};
 
 =head1 NAME
 
@@ -467,37 +467,70 @@ sub exec {
    my $odata= my $edata='';
    my $opart;
    my $epart;
-   while (1) {
+   my $done;
+   local $SIG{CHLD} = sub { $done++ }; # this works due to closure rules
+   while (not $done) {
       my $nfound=select(my $rout=$rmask,undef,undef,1);
       next unless $nfound;
       my @bits=split(//,unpack('b*',$rout));
       if ($bits[$out->fileno]) {
          my $data;
          while (my $c=sysread $out,$data,1024) {
-            if ($self->{'outfun'}) {
+            if ($merged->{'outfun'}) {
                my $npart=$1 if ($data=~s/([^\n]+)\z//s);
                foreach my $line (split /^/m,$opart.$data) {
-                  &{$self->{outfun}}($line,'out');
+                  &{$merged->{outfun}}($line,'out');
                }
                $opart=$npart;
             }
             $odata.=$data;
+            last if $out->eof;
          }
       }
       if ($bits[$err->fileno]) {
          my $data;
          while (my $c=sysread $err,$data,1024) {
-            if ($self->{'errfun'}) {
+            if ($merged->{'errfun'}) {
                my $npart=$1 if ($data=~s/([^\n]+)\z//s);
                foreach my $line (split /^/m,$epart.$data) {
-                  &{$self->{errfun}}($line,'err');
+                  &{$merged->{errfun}}($line,'err');
                }
                $epart=$npart;
             }
             $edata.=$data;
+            last if $err->eof;
          }
       }
       last if $out->eof and $err->eof;
+   }
+   # check them again in case we dropped out early due to sigchild
+   unless ($out->eof) {
+      my $data;
+      while (my $c=sysread $out,$data,1024) {
+         if ($merged->{'outfun'}) {
+            my $npart=$1 if ($data=~s/([^\n]+)\z//s);
+            foreach my $line (split /^/m,$opart.$data) {
+               &{$merged->{outfun}}($line,'out');
+            }
+            $opart=$npart;
+         }
+         $odata.=$data;
+         last if $out->eof;
+      }
+   }
+   unless ($err->eof) {
+      my $data;
+      while (my $c=sysread $err,$data,1024) {
+         if ($merged->{'errfun'}) {
+            my $npart=$1 if ($data=~s/([^\n]+)\z//s);
+            foreach my $line (split /^/m,$epart.$data) {
+               &{$merged->{errfun}}($line,'err');
+            }
+            $epart=$npart;
+         }
+         $edata.=$data;
+         last if $err->eof;
+      }
    }
    $self->{'out'}=$odata ? [ split /^/m,$odata ] : '';
    $self->{'err'}=$edata ? [ split /^/m,$edata ] : '';
