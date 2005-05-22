@@ -24,7 +24,7 @@ use File::Rsync::Config;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.38';
+$VERSION = '0.39';
 
 =head1 NAME
 
@@ -176,15 +176,16 @@ sub new {
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
-         address           0  files-from        0  port              0
-         backup-dir        0  include-from      0  protocol          0
-         block-size        0  link-dest         0  read-batch        0 
-         bwlimit           0  log-format        0  rsh               0 
-         checksum-seed     0  max-delete        0  rsync-path        0 
-         compare-dest      0  max-size          0  suffix            0 
-         config            0  modify-window     0  temp-dir          0 
-         csum-length       0  partial-dir       0  timeout           0 
-         exclude-from      0  password-file     0  write-batch       0 
+         address           0  include-from      0  protocol          0
+         backup-dir        0  link-dest         0  read-batch        0
+         block-size        0  log-format        0  rsh               0
+         bwlimit           0  max-delete        0  rsync-path        0
+         checksum-seed     0  max-size          0  suffix            0
+         compare-dest      0  modify-window     0  temp-dir          0
+         config            0  only-write-batch  0  timeout           0
+         csum-length       0  partial-dir       0  write-batch       0
+         exclude-from      0  password-file     0
+         files-from        0  port              0
       )},
       # these are not flags but counters, each time they appear it raises the
       # count, so we keep track and pass them the same number of times
@@ -316,12 +317,14 @@ sub _parseopts {
             if (my $reftype = ref $opt->{$hashopt}) {
                if ($reftype eq 'ARRAY') {
                   $OPT{$tag} = $opt->{$hashopt};
+               } elsif ($tag eq 'source' && blessed $opt->{$hashopt}) {
+                  $OPT{$tag} = [ $opt->{$hashopt} ];
                } else {
                   carp "$pkgname: invalid reference type for $hashopt option";
                   return;
                }
-            } elsif ( $tag eq 'source') {
-               $OPT{$tag} = $opt->{$hashopt};
+            } elsif ($tag eq 'source') {
+               $OPT{$tag} = [ $opt->{$hashopt} ];
             } else {
                carp "$pkgname: $hashopt is not a reference";
                return;
@@ -482,26 +485,14 @@ sub getcmd {
       push @cmd,"--filter=$opt";
    }
    if ($merged->{'source'}) {
-      if (ref $merged->{'source'}) {
-         if ($merged->{'srchost'}) {
-            push @cmd, "$merged->{'srchost'}:" . join ' ',
-               $merged->{'quote-src'} ? map { "\"$_\"" } @{$merged->{'source'}}
-                                      : @{$merged->{'source'}};
-         } else {
-            push @cmd,
-               $merged->{'quote-src'} ? map { "\"$_\"" } @{$merged->{'source'}}
-                                      : @{$merged->{'source'}};
-         }
+      if ($merged->{'srchost'}) {
+         push @cmd, "$merged->{'srchost'}:" . join ' ',
+            $merged->{'quote-src'} ? map { "\"$_\"" } @{$merged->{'source'}}
+                                    : @{$merged->{'source'}};
       } else {
-         if ($merged->{'srchost'}) {
-            push @cmd, "$merged->{'srchost'}:" .
-               ($merged->{'quote-src'} ? "\"$merged->{'source'}\""
-                                       : $merged->{'source'});
-         } else {
-            push @cmd,
-               $merged->{'quote-src'} ? "\"$merged->{'source'}\""
-                                      : $merged->{'source'};
-         }
+         push @cmd,
+            $merged->{'quote-src'} ? map { "\"$_\"" } @{$merged->{'source'}}
+                                    : @{$merged->{'source'}};
       }
    } elsif ($merged->{'srchost'} and $list) {
       push @cmd, "$merged->{'srchost'}:";
@@ -828,6 +819,8 @@ Bill Uhl
 Peter teStrake
 
 Harald Flaucher
+
+Simon Myers
 
 =head1 Inspiration and Assistance
 

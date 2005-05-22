@@ -1,3 +1,14 @@
+Sun May 22 17:13:16 CDT 2005 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.39: Simon Myers ( Smylers at stripey dot com ) sent
+      a patch to allow Path::Class objects as source paths.  The previous
+      error checking only allowed source to be a string or an array.
+      This update bypasses the sanity-check if the source is a blessed
+      object and now assumes the programmer knows what they are doing
+      and that the object can be read as a string.
+
+      Added support for the only-write-batch option in rsync-2.6.5-pre1
+
 Wed Mar 30 22:06:04 CST 2005 ( leakin at dfw dot nostrum dot com )
 
       * version 0.38: Harald Flaucher ( Harald dot Flaucher at
