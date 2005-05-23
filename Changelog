@@ -1,3 +1,8 @@
+Mon May 23 16:51:42 CDT 2005 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.40: I missed one critical line in the patch from Smylers
+      and broke more than I fixed.  This update includes the 'use' statement.
+
 Sun May 22 17:13:16 CDT 2005 ( leakin at dfw dot nostrum dot com )
 
       * version 0.39: Simon Myers ( Smylers at stripey dot com ) sent
