@@ -20,12 +20,12 @@ use IO::Select;
 use POSIX ":sys_wait_h";
 use Carp 'carp';
 use File::Rsync::Config;
-use Scalar::Util;
+use Scalar::Util qw(blessed);
 
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.40';
+$VERSION = '0.41';
 
 =head1 NAME
 
