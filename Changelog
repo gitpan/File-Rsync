@@ -1,3 +1,11 @@
+Fri Jun 24 21:11:04 CDT 2005 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.42: added Scalar::Util as a required module since it was
+		not part of core before perl 5.8 (sorry).  Also changed build-name for
+		the config file so it will not clobber perl's Config.pm for odd
+		@INC orders.  Thanks again to Simon Myers (Smylers at stripey dot com )
+		for pointing out the potential problem.
+
 Tue May 24 11:28:43 CDT 2005 ( leakin at dfw dot nostrum dot com )
 
       * version 0.41: fixed 'use Scalar::Util' again (hopefully correct this

@@ -12,7 +12,7 @@ print STDERR "\nNOTE: expect 'badoption' message for test 6\n\n";
 print "ok 1\n";
 
 system qw(rm -rf destdir);
-# perl-style, all in one
+# all in one
 {
    my $rs=File::Rsync->new(archive => 1,
          src => 'blib', dest => 'destdir');
@@ -26,7 +26,7 @@ system qw(rm -rf destdir);
 }
 
 system qw(rm -rf destdir);
-# perl-style, some in new, some in exec
+# some in new, some in exec
 {
    my $rs=File::Rsync->new(archive => 1);
    unless ($rs) {
@@ -50,7 +50,7 @@ system qw(rm -rf destdir);
       no strict;
       my $ret=$rs->exec(src => 'some-non-existant-path-name', dest => 'destdir');
          (@{$rs->err} >= 1
-         && $rs->err->[0] =~ /:\s+No such file or directory\b/)
+         && $rs->err->[0] =~ /\bNo such file or directory\b/i)
          || ($fail++,print "not ");
    }
    print "ok 4\n";
@@ -69,7 +69,7 @@ system qw(rm -rf destdir);
       ($ret == 0
          && $rs->status != 0
          && @{$rs->err} > 0
-         && ${$rs->err}[0] =~/:\s+No such file or directory\b/)
+         && ${$rs->err}[0] =~/\bNo such file or directory\b/i)
          || ($fail++,print "not ");
    }
    print "ok 5\n";

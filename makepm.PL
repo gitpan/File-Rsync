@@ -27,8 +27,8 @@ chomp $ans;
 $RSYNC=$ans || $RSYNC;
 $RSYNC=~s/\\/\\\\/g;
 $RSYNC=~s/\'/\\\'/g;
-open IN,'Config.in' or die "Cannot read Config.in: $!\n";
-open OUT,'>Config.pm' or die "Cannot write Config.pm: $!\n";
+open IN,'config.in' or die "Cannot read config.in: $!\n";
+open OUT,'>config.pm' or die "Cannot write config.pm: $!\n";
 while (<IN>) {
    if (/^(\s*rsync_path\s*=>)/) { print OUT "$1 '$RSYNC',\n" }
    else                                  { print OUT }

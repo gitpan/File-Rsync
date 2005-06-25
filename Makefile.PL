@@ -16,10 +16,11 @@ WriteMakefile(
       DISTNAME       => $DISTNAME,
       AUTHOR         => $AUTHOR,
       ABSTRACT       => $ABSTRACT,
-      PL_FILES       => { 'makepm.PL' => 'Config.pm' },
+      PREREQ_PM      => { 'Scalar::Util' => 0 },
+      PL_FILES       => { 'makepm.PL' => 'config.pm' },
       PM             => { 'Rsync.pm'  => '$(INST_LIB)/File/Rsync.pm',
-     			  'Config.pm' => '$(INST_ARCHLIB)/File/Rsync/Config.pm' },
+     			  'config.pm' => '$(INST_ARCHLIB)/File/Rsync/Config.pm' },
       dist           => { COMPRESS => 'gzip', SUFFIX => 'gz' },
-      realclean      => { FILES => 'Config.pm' },
+      realclean      => { FILES => 'config.pm' },
 );
 

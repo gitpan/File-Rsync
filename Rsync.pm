@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed);
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.41';
+$VERSION = '0.42';
 
 =head1 NAME
 
@@ -404,7 +404,8 @@ I<getcmd> returns a reference to an array containing the real rsync command
 that would be called if the exec function were called.  The last example above
 includes a reference to the optional stdin function, stdout function, stderr
 function, and the debug setting.  This is the form used by the I<exec> method
-to get the extra parameters it needs to do its job.
+to get the extra parameters it needs to do its job.  The function is exposed
+to allow a user-defined exec function to be used, or for debugging purposes.
 
 =back
 
@@ -768,7 +769,8 @@ Returns the actual system command used by the last I<exec> call, or '' before
 any calls to I<exec> for the object.  This can be useful in the case of an
 error condition to give a more informative message or for debugging purposes.
 In an array context it return an array of args as passed to the system, in
-a scalar context it returns a space-seperated string.
+a scalar context it returns a space-seperated string.  See I<getcmd> for access
+to the command before execution.
 
 =back
 
