@@ -1,10 +1,25 @@
+Tue Aug 18 10:56:10 CDT 2009 ( leakin at dfw dot nostrum dot com )
+
+      * version 0.43: Gavin Carr ( gavin at openfusion dot com dot au )
+      sent a patch to make include-from and exclude-from allow multiple
+      arguments.  This oversight was a misunderstanding on my part as to
+      how these actually work.  Many thanks to Gavin for correcting my
+      preception in the form of a very helpful patch.
+
+      also added support for new options in 2.6.7
+
+      removed 1 second sleep based on Petya Kohts testing ( kohts at
+      yandex-team dot ru ) as this is un-needed paranoia
+
+		added test to check for rsync binary in configured location
+
 Fri Jun 24 21:11:04 CDT 2005 ( leakin at dfw dot nostrum dot com )
 
       * version 0.42: added Scalar::Util as a required module since it was
-		not part of core before perl 5.8 (sorry).  Also changed build-name for
-		the config file so it will not clobber perl's Config.pm for odd
-		@INC orders.  Thanks again to Simon Myers (Smylers at stripey dot com )
-		for pointing out the potential problem.
+      not part of core before perl 5.8 (sorry).  Also changed build-name for
+      the config file so it will not clobber perl's Config.pm for odd
+      @INC orders.  Thanks again to Simon Myers (Smylers at stripey dot com )
+      for pointing out the potential problem.
 
 Tue May 24 11:28:43 CDT 2005 ( leakin at dfw dot nostrum dot com )
 

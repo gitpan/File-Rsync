@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed);
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.42';
+$VERSION = '0.43';
 
 =head1 NAME
 
@@ -75,7 +75,7 @@ hardcoded path to the rsync binary that is defined when the module is
 installed, and B<debug> which causes the module methods to print some
 debugging information to STDERR.  There are also 2 options to wrap the
 source and/or destination paths in double-quotes.  They are B<quote-src>
-and B<quote-dest>, and may be useful in protecting the paths from shell
+and B<quote-dst>, and may be useful in protecting the paths from shell
 expansion (particularly useful for paths containing spaces).  The
 B<outfun> and B<errfun> options take a function reference.  The function
 is called once for each line of output from the I<rsync> program with the
@@ -154,49 +154,64 @@ sub new {
       # these are the boolean flags to rsync, all default off, including them
       # in the args list turns them on
       'flag' => {qw(
-         archive           0  force             0  no-whole-file     0
-         backup            0  from0             0  numeric-ids       0
-         blocking-io       0  fuzzy             0  omit-dir-times    0
-         checksum          0  group             0  one-file-system   0
-         compress          0  hard-links        0  whole-file        0
-         copy-links        0  help              0  owner             0
-         copy-unsafe-links 0  ignore-errors     0  partial           0
-         cvs-exclude       0  ignore-existing   0  perms             0
-         daemon            0  ignore-times      0  progress          0
-         del               0  inplace           0  recursive         0
-         delay-updates     0  ipv4              0  relative          0
-         delete            0  ipv6              0  remove-sent-files 0
-         delete-after      0  itemize-changes   0  safe-links        0
-         delete-before     0  keep-dirlinks     0  size-only         0
-         delete-during     0  links             0  sparse            0
-         delete-excluded   0  list-only         0  stats             0
-         devices           0  no-blocking-io    0  times             0
-         dirs              0  no-detach         0  update            0
-         dry-run           0  no-implied-dirs   0  version           0
-         existing          0  no-relative       0  acls              0
+         8-bit-output         0  fuzzy                0  no-specials          0
+         acls                 0  group                0  no-super             0
+         append               0  hard-links           0  no-times             0
+         archive              0  help                 0  no-whole-file        0
+         backup               0  ignore-errors        0  numeric-ids          0
+         blocking-io          0  ignore-existing      0  omit-dir-times       0
+         checksum             0  ignore-non-existing  0  one-file-system      0
+         compress             0  ignore-times         0  whole-file           0
+         copy-dirlinks        0  inplace              0  owner                0
+         copy-links           0  ipv4                 0  partial              0
+         copy-unsafe-links    0  ipv6                 0  perms                0
+         cvs-exclude          0  keep-dirlinks        0  progress             0
+         daemon               0  links                0  prune-empty-dirs     0
+         del                  0  list-only            0  recursive            0
+         delay-updates        0  no-blocking-io       0  relative             0
+         delete               0  no-detach            0  remove-sent-files    0
+         delete-after         0  no-devices           0  safe-links           0
+         delete-before        0  no-dirs              0  size-only            0
+         delete-during        0  no-groups            0  sparse               0
+         delete-excluded      0  no-implied-dirs      0  specials             0
+         devices              0  no-links             0  stats                0
+         dirs                 0  no-owner             0  super                0
+         dry-run              0  no-partial           0  times                0
+         executability        0  no-perms             0  update               0
+         existing             0  no-progress          0  version              0
+         force                0  no-recursive         0  xattrs               0
+         from0                0  no-relative          0  
       )},
       # these have simple scalar args we cannot easily check
       'scalar' => {qw(
-         address           0  include-from      0  protocol          0
-         backup-dir        0  link-dest         0  read-batch        0
-         block-size        0  log-format        0  rsh               0
-         bwlimit           0  max-delete        0  rsync-path        0
-         checksum-seed     0  max-size          0  suffix            0
-         compare-dest      0  modify-window     0  temp-dir          0
-         config            0  only-write-batch  0  timeout           0
-         csum-length       0  partial-dir       0  write-batch       0
-         exclude-from      0  password-file     0
-         files-from        0  port              0
+         address              0  log-format           0  protocol             0
+         backup-dir           0  max-delete           0  read-batch           0
+         block-size           0  max-size             0  rsh                  0
+         bwlimit              0  min-size             0  rsync-path           0
+         checksum-seed        0  modify-window        0  sockopts             0
+         compress-level       0  only-write-batch     0  suffix               0
+         config               0  partial-dir          0  temp-dir             0
+         csum-length          0  password-file        0  timeout              0
+         files-from           0  port                 0  write-batch          0
       )},
       # these are not flags but counters, each time they appear it raises the
       # count, so we keep track and pass them the same number of times
-      'counter' => {qw(quiet 0    verbose 0)},
+      'counter' => {qw(
+         human-readable       0  one-file-system      0  verbose              0
+         itemize-changes      0  quiet                0
+      )},
       # these can be specified multiple times and are additive, the doc also
       # specifies that it is an ordered list so we must preserve that order
-      'exclude'     => [],
-      'include'     => [],
-      'filter'      => [],
-      'literal'     => [],
+      'chmod'        => [],
+      'compare-dest' => [],
+      'copy-dest'    => [],
+      'exclude'      => [],
+      'exclude-from' => [],
+      'filter'       => [],
+      'include'      => [],
+      'include-from' => [],
+      'link-dest'    => [],
+      'literal'      => [],
       # hostname of source, used if 'source' is an array reference
       'srchost'     => '',
       # source host and/or path names
@@ -305,9 +320,15 @@ sub _parseopts {
          $OPT{$savopt} = $opt->{$hashopt};
       } else {
          my $tag = '';
-         if (     $hashopt eq 'exclude'
-               or $hashopt eq 'include'
+         if (     $hashopt eq 'chmod'
+               or $hashopt eq 'compare-dest'
+               or $hashopt eq 'copy-dest'
+               or $hashopt eq 'exclude'
+               or $hashopt eq 'exclude-from'
                or $hashopt eq 'filter'
+               or $hashopt eq 'include'
+               or $hashopt eq 'include-from'
+               or $hashopt eq 'link-dest'
                or $hashopt eq 'literal') {
             $tag = $hashopt;
          } elsif ($hashopt eq 'source'
@@ -371,12 +392,15 @@ sub _saveopts {
          $self->{'scalar'}{$opt} = $opts->{$opt};
       } elsif (exists $self->{'counter'}{$opt}) {
          $self->{'counter'}{$opt} = $opts->{$opt};
-      } elsif ($opt eq 'exclude' or $opt eq 'include' or $opt eq 'filter'
-            or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
-            or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
-            or $opt eq 'path-to-rsync' or $opt eq 'srchost'
-            or $opt eq 'quote-dst' or $opt eq 'quote-src'
-            or $opt eq 'literal') {
+      } elsif ($opt eq 'chmod' or $opt eq 'compare-dest'
+            or $opt eq 'copy-dest' or $opt eq 'link-dest'
+            or $opt eq 'exclude' or $opt eq 'exclude-from'
+            or $opt eq 'include' or $opt eq 'include-from'
+            or $opt eq 'filter' or $opt eq 'source' or $opt eq 'dest'
+            or $opt eq 'debug' or $opt eq 'outfun' or $opt eq 'errfun'
+            or $opt eq 'infun' or $opt eq 'path-to-rsync'
+            or $opt eq 'srchost' or $opt eq 'quote-dst'
+            or $opt eq 'quote-src' or $opt eq 'literal') {
          $self->{$opt} = $opts->{$opt};
       } else {
          carp "$pkgname: unknown option: $opt";
@@ -429,8 +453,10 @@ sub getcmd {
             $runopts{$type}{$opt} = $self->{$type}{$opt};
          }
       }
-      foreach my $opt (qw(path-to-rsync exclude include filter source srchost
-               debug dest outfun errfun infun quote-dst quote-src literal)) {
+      foreach my $opt (qw(path-to-rsync chmod compare-dest copy-dest
+               exclude exclude-from filter include include-from
+               link-dest source srchost debug dest outfun
+               errfun infun quote-dst quote-src literal)) {
          $runopts{$opt} = $self->{$opt};
       }
       # now allow any args passed directly to exec to override
@@ -441,12 +467,15 @@ sub getcmd {
             $runopts{'scalar'}{$opt} = $execopts->{$opt};
          } elsif (exists $runopts{'counter'}{$opt}) {
             $runopts{'counter'}{$opt} = $execopts->{$opt};
-         } elsif ($opt eq 'exclude' or $opt eq 'include' or $opt eq 'filter'
-               or $opt eq 'source' or $opt eq 'dest' or $opt eq 'debug'
-               or $opt eq 'outfun' or $opt eq 'errfun' or $opt eq 'infun'
-               or $opt eq 'path-to-rsync' or $opt eq 'srchost'
-               or $opt eq 'quote-dst' or $opt eq 'quote-src'
-               or $opt eq 'literal') {
+         } elsif ($opt eq 'chmod' or $opt eq 'compare-dest'
+               or $opt eq 'copy-dest' or $opt eq 'link-dest'
+               or $opt eq 'exclude' or $opt eq 'exclude-from'
+               or $opt eq 'include' or $opt eq 'include-from'
+               or $opt eq 'filter' or $opt eq 'source' or $opt eq 'dest'
+               or $opt eq 'debug' or $opt eq 'outfun' or $opt eq 'errfun'
+               or $opt eq 'infun' or $opt eq 'path-to-rsync'
+               or $opt eq 'srchost' or $opt eq 'quote-dst'
+               or $opt eq 'quote-src' or $opt eq 'literal') {
             $runopts{$opt} = $execopts->{$opt};
          } else {
             carp "$pkgname: unknown option: $opt";
@@ -477,14 +506,32 @@ sub getcmd {
       carp "$pkgname: 'exclude' and/or 'include' and/or 'filter' options specified, only one allowed";
       return;
    }
+   foreach my $opt (@{$merged->{'chmod'}}) {
+      push @cmd,"--chmod=$opt";
+   }
+   foreach my $opt (@{$merged->{'compare-dest'}}) {
+      push @cmd,"--compare-dest=$opt";
+   }
+   foreach my $opt (@{$merged->{'copy-dest'}}) {
+      push @cmd,"--copy-dest=$opt";
+   }
    foreach my $opt (@{$merged->{'exclude'}}) {
       push @cmd,"--exclude=$opt";
+   }
+   foreach my $opt (@{$merged->{'exclude-from'}}) {
+      push @cmd,"--exclude-from=$opt";
+   }
+   foreach my $opt (@{$merged->{'filter'}}) {
+      push @cmd,"--filter=$opt";
    }
    foreach my $opt (@{$merged->{'include'}}) {
       push @cmd,"--include=$opt";
    }
-   foreach my $opt (@{$merged->{'filter'}}) {
-      push @cmd,"--filter=$opt";
+   foreach my $opt (@{$merged->{'include-from'}}) {
+      push @cmd,"--include-from=$opt";
+   }
+   foreach my $opt (@{$merged->{'link-dest'}}) {
+      push @cmd,"--link-dest=$opt";
    }
    if ($merged->{'source'}) {
       if ($merged->{'srchost'}) {
@@ -577,7 +624,6 @@ sub exec {
          select((select($in),&{$infun})[0]);
       }
       $in->close;
-      sleep 1; # give open3 a chance to get the filehandles opened
    }
    my $odata = my $edata = '';
 
@@ -824,6 +870,10 @@ Peter teStrake
 Harald Flaucher
 
 Simon Myers
+
+Gavin Carr
+
+Petya Kohts
 
 =head1 Inspiration and Assistance
 

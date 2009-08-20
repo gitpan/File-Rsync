@@ -8,8 +8,16 @@ use strict;
 use vars qw($loaded $fail);
 $loaded=1;
 $fail=0;
-print STDERR "\nNOTE: expect 'badoption' message for test 6\n\n";
+warn "\nNOTE: expect 'badoption' message for test 7\n\n";
 print "ok 1\n";
+
+unless (-x $File::Rsync::RsyncConfig{rsync_path}) {
+   $fail++;
+   print "not ok 2\n";
+   warn "configured path to rsync binary ($File::Rsync::RsyncConfig{rsync_path}) does not exist or is not executable\n";
+   exit 1;
+}
+print "ok 2\n";
 
 system qw(rm -rf destdir);
 # all in one
@@ -22,7 +30,7 @@ system qw(rm -rf destdir);
       my $ret=$rs->exec;
       ($ret == 1 && $rs->status == 0 && ! $rs->err) || ($fail++,print "not ");
    }
-   print "ok 2\n";
+   print "ok 3\n";
 }
 
 system qw(rm -rf destdir);
@@ -36,7 +44,7 @@ system qw(rm -rf destdir);
       my $ret=$rs->exec(src => 'blib', dest => 'destdir');
       ($ret == 1 && $rs->status == 0 && ! $rs->err) || ($fail++,print "not ");
    }
-   print "ok 3\n";
+   print "ok 4\n";
 }
 
 system qw(rm -rf destdir);
@@ -53,7 +61,7 @@ system qw(rm -rf destdir);
          && $rs->err->[0] =~ /\bNo such file or directory\b/i)
          || ($fail++,print "not ");
    }
-   print "ok 4\n";
+   print "ok 5\n";
 }
 
 system qw(rm -rf destdir);
@@ -72,7 +80,7 @@ system qw(rm -rf destdir);
          && ${$rs->err}[0] =~/\bNo such file or directory\b/i)
          || ($fail++,print "not ");
    }
-   print "ok 5\n";
+   print "ok 6\n";
 }
 
 system qw(rm -rf destdir);
@@ -80,7 +88,7 @@ system qw(rm -rf destdir);
 {
    my $rs=File::Rsync->new(archive => 1, badoption => 1);
    $rs && ($fail++,print "not ");
-   print "ok 6\n";
+   print "ok 7\n";
 }
 
 system qw(rm -rf destdir);

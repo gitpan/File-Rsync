@@ -6,11 +6,13 @@ Copyright (C) 2000-2005 Lee Eakin.  All rights reserved.
    it under the same terms as Perl itself.
 *******************************************************************************
 
-Updated to support new options of rsync 2.6.5-pre1
+Updated to support new options of rsync 2.6.7
 
-If you are using an older version than rsync 2.6.2, please check out the
-latest version.  There have been several fixes and significant speed
-improvements.
+This is a long overdue update that has been sitting in my queue.
+
+Another update is due as well that would change to orderd args based on
+discussions with Gavin Carr.  I hope to have it ready soon along with
+any new option support since 2.6.7.
 
 Although I am the original author and maintainer, many of the bug fixes and
 improvements have come as either suggestions or patches from the perl
