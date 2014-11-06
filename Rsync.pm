@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed);
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.43';
+$VERSION = '0.44';
 
 =head1 NAME
 
@@ -71,11 +71,11 @@ in the object as defaults for all future I<exec> calls on that object.
 Options may be passed in the form of a hash and are the same as the long
 options in I<rsync(1)> with the leading double-dash removed.  An additional
 option of B<path-to-rsync> also exists which can be used to override the
-hardcoded path to the rsync binary that is defined when the module is
-installed, and B<debug> which causes the module methods to print some
-debugging information to STDERR.  There are also 2 options to wrap the
-source and/or destination paths in double-quotes.  They are B<quote-src>
-and B<quote-dst>, and may be useful in protecting the paths from shell
+using PATH environemt variable to find the rsync command binary, and
+B<debug> which causes the module methods to print some debugging
+information to STDERR.  There are also 2 options to wrap the source and/or
+destination paths in double-quotes.  They are B<quote-src> and
+B<quote-dst>, and may be useful in protecting the paths from shell
 expansion (particularly useful for paths containing spaces).  The
 B<outfun> and B<errfun> options take a function reference.  The function
 is called once for each line of output from the I<rsync> program with the
@@ -128,7 +128,7 @@ B<delete-during>, B<delay-updates>, B<dirs>, B<filter>, B<fuzzy>,
 B<itemize-changes>, B<list-only>, B<omit-dir-times>, B<remove-sent-files>,
 B<max-size>, and B<protocol>.
 
-Version 0.38 of this module also adds support for the B<acls> option that
+Version 0.38 of this module also added support for the B<acls> option that
 is not part of I<rsync(1)> unless the patch has been applied, but people do
 use it.  It also includes a new B<literal> option that takes an array reference
 similar to B<include>, B<exclude>, and B<filter>.  Any arguments in the array
@@ -149,8 +149,8 @@ sub new {
    # seed the options hash, booleans, scalars, excludes, source, dest, data,
    # status, stderr/stdout storage for last exec
    my $self = {
-      # the full path name to the rsync binary
-      'path-to-rsync' => $RsyncConfig{rsync_path},
+      # the path name to the rsync binary (default is to use $PATH)
+      'path-to-rsync' => 'rsync',
       # these are the boolean flags to rsync, all default off, including them
       # in the args list turns them on
       'flag' => {qw(

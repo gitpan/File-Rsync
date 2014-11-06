@@ -1,3 +1,8 @@
+Thu Nov  6 10:03:01 CST 2014 ( leakin at dfw dot nostrum dot com )
+
+		* version 0.44: long overdue fix for automated builds, removed
+		prompt for rsync path to use PATH enviroment instead.
+
 Tue Aug 18 10:56:10 CDT 2009 ( leakin at dfw dot nostrum dot com )
 
       * version 0.43: Gavin Carr ( gavin at openfusion dot com dot au )
@@ -263,7 +268,7 @@ Thu Feb 15 21:25:23 CST 2001  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       use File::Rsync;$rs=File::Rsync->new(srchost => 'localhost:');
       print $rs->list; will list available modules on the local daemon.
-      
+
 Tue Nov 28 10:22:50 CST 2000  Lee Eakin  ( leakin at dfw dot nostrum dot com )
 
       * version 0.15: After more thought and discussion with Boris we decided
@@ -372,7 +377,7 @@ Sun Nov 28 02:47:34 CST 1999  Lee Eakin  ( leakin at dfw dot nostrum dot com )
       increased flexibility including the ability to turn off boolean flags,
       and to build your own include or exclude list as an array and pass a
       reference to the array to the module.  The same can be done for source
-      paths.  
+      paths.
 
       * removed leading double-dashes from the option keys.  It is easier to
       add them in the parser for command-line style than to remove them for

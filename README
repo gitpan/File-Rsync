@@ -1,18 +1,17 @@
 File-Rsync - A wrapper module for rsync(1) http://rsync.samba.org/rsync/
 
 *******************************************************************************
-Copyright (C) 2000-2005 Lee Eakin.  All rights reserved.
+Copyright (C) 2000-2014 Lee Eakin.  All rights reserved.
    This program is free software; you can redistribute it and/or modify
    it under the same terms as Perl itself.
 *******************************************************************************
 
-Updated to support new options of rsync 2.6.7
+Updated to use $PATH environment variable to find rsync instead of hard-coding in
+the module since prompting breaks automatic builds and most modren systems should
+have rsync installed by now.  It can be overridden using path-to-rsync at run time.
 
-This is a long overdue update that has been sitting in my queue.
-
-Another update is due as well that would change to orderd args based on
-discussions with Gavin Carr.  I hope to have it ready soon along with
-any new option support since 2.6.7.
+Many more long overdue updates, hopefully very soon to come including
+one that would change to orderd args based on discussions with Gavin Carr.
 
 Although I am the original author and maintainer, many of the bug fixes and
 improvements have come as either suggestions or patches from the perl
@@ -31,7 +30,7 @@ QUICK START GUIDE:
       make
       make test
       make install
-   
+
    Once installed you can use 'perldoc File::Rsync' to get the rest of the
    documentation.  Or if you'd prefer to examine the docs before installation
    try 'perldoc -F Rsync.pm'.

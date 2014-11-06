@@ -17,10 +17,7 @@ WriteMakefile(
       AUTHOR         => $AUTHOR,
       ABSTRACT       => $ABSTRACT,
       PREREQ_PM      => { 'Scalar::Util' => 0 },
-      PL_FILES       => { 'makepm.PL' => 'config.pm' },
-      PM             => { 'Rsync.pm'  => '$(INST_LIB)/File/Rsync.pm',
-     			  'config.pm' => '$(INST_ARCHLIB)/File/Rsync/Config.pm' },
+      PM             => { 'Rsync.pm'  => '$(INST_LIB)/File/Rsync.pm' },
       dist           => { COMPRESS => 'gzip', SUFFIX => 'gz' },
-      realclean      => { FILES => 'config.pm' },
 );
 
