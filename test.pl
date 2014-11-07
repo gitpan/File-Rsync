@@ -11,10 +11,10 @@ $fail=0;
 warn "\nNOTE: expect 'badoption' message for test 7\n\n";
 print "ok 1\n";
 
-unless (-x $File::Rsync::RsyncConfig{rsync_path}) {
+unless (whence('rsync')) {
    $fail++;
    print "not ok 2\n";
-   warn "configured path to rsync binary ($File::Rsync::RsyncConfig{rsync_path}) does not exist or is not executable\n";
+   warn "rsync binary not found in PATH ($ENV{PATH})\n";
    exit 1;
 }
 print "ok 2\n";
@@ -93,3 +93,9 @@ system qw(rm -rf destdir);
 
 system qw(rm -rf destdir);
 exit 1 if $fail;
+
+sub whence {
+   my $cmd = shift;
+   -x "$_/$cmd" && return "$_/$cmd" for (split /:/, $ENV{PATH});
+   return;
+}

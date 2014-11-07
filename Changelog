@@ -1,3 +1,7 @@
+Fri Nov  7 08:45:42 CST 2014 ( leakin at dfw dot nostrum dot com )
+
+		* version 0.45: removed 'use File::Rsync::Config', oops
+
 Thu Nov  6 10:03:01 CST 2014 ( leakin at dfw dot nostrum dot com )
 
 		* version 0.44: long overdue fix for automated builds, removed

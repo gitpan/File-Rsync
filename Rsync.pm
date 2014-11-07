@@ -19,13 +19,12 @@ use IPC::Open3 qw(open3);
 use IO::Select;
 use POSIX ":sys_wait_h";
 use Carp 'carp';
-use File::Rsync::Config;
 use Scalar::Util qw(blessed);
 
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.44';
+$VERSION = '0.45';
 
 =head1 NAME
 
